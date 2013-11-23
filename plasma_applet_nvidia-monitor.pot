@@ -1,0 +1,137 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: no addr for now\n"
+"POT-Creation-Date: 2013-05-12 08:19+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: applet/NVidiaMonitorApplet.cpp:98
+msgid "nVidia Monitor"
+msgstr ""
+
+#: applet/NVidiaMonitorApplet.cpp:353
+msgid "General"
+msgstr ""
+
+#: applet/NVidiaMonitorApplet.cpp:473
+msgid "Temperature : %1 °C<br/>"
+msgstr ""
+
+#: applet/NVidiaMonitorApplet.cpp:475
+msgid "Frenquencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>"
+msgstr ""
+
+#: applet/NVidiaMonitorApplet.cpp:477
+msgid "Memory Usage : %1% (%2 / %3 Mo)<br/>"
+msgstr ""
+
+#: applet/applet.cpp:278
+msgid "No data sources being displayed"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:23
+#. i18n: ectx: property (windowTitle), widget (QWidget, NVidiaMonitorConfig)
+#: rc.cpp:3 rc.cpp:3
+msgid "Form"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:72
+#. i18n: ectx: property (text), widget (QLabel, generalAnalogLabel)
+#: rc.cpp:6 rc.cpp:6
+msgid "Show Analog Meter"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:109
+#. i18n: ectx: property (text), widget (QLabel, temperatureLabel)
+#: rc.cpp:9 rc.cpp:9
+msgid "Temperature"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:133
+#. i18n: ectx: property (text), widget (QLabel, tempPollingLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:261
+#. i18n: ectx: property (text), widget (QLabel, freqsPollingLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:435
+#. i18n: ectx: property (text), widget (QLabel, memPollingLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:133
+#. i18n: ectx: property (text), widget (QLabel, tempPollingLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:261
+#. i18n: ectx: property (text), widget (QLabel, freqsPollingLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:435
+#. i18n: ectx: property (text), widget (QLabel, memPollingLabel)
+#: rc.cpp:12 rc.cpp:27 rc.cpp:48 rc.cpp:12 rc.cpp:27 rc.cpp:48
+msgid "Polling Interval"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:152
+#. i18n: ectx: property (suffix), widget (QSpinBox, tempPollingSpinBox)
+#. i18n: file: NVidiaMonitorConfig.ui:280
+#. i18n: ectx: property (suffix), widget (QSpinBox, freqsPollingSpinBox)
+#. i18n: file: NVidiaMonitorConfig.ui:454
+#. i18n: ectx: property (suffix), widget (QSpinBox, memPollingSpinBox)
+#. i18n: file: NVidiaMonitorConfig.ui:152
+#. i18n: ectx: property (suffix), widget (QSpinBox, tempPollingSpinBox)
+#. i18n: file: NVidiaMonitorConfig.ui:280
+#. i18n: ectx: property (suffix), widget (QSpinBox, freqsPollingSpinBox)
+#. i18n: file: NVidiaMonitorConfig.ui:454
+#. i18n: ectx: property (suffix), widget (QSpinBox, memPollingSpinBox)
+#: rc.cpp:15 rc.cpp:30 rc.cpp:51 rc.cpp:15 rc.cpp:30 rc.cpp:51
+msgctxt "millisecond"
+msgid " ms"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:177
+#. i18n: ectx: property (text), widget (QLabel, tempInAppletLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:305
+#. i18n: ectx: property (text), widget (QLabel, freqsInAppletLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:389
+#. i18n: ectx: property (text), widget (QLabel, memInAppletLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:177
+#. i18n: ectx: property (text), widget (QLabel, tempInAppletLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:305
+#. i18n: ectx: property (text), widget (QLabel, freqsInAppletLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:389
+#. i18n: ectx: property (text), widget (QLabel, memInAppletLabel)
+#: rc.cpp:18 rc.cpp:33 rc.cpp:42 rc.cpp:18 rc.cpp:33 rc.cpp:42
+msgid "Show in Applet"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:200
+#. i18n: ectx: property (text), widget (QLabel, tempInToolTipLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:328
+#. i18n: ectx: property (text), widget (QLabel, freqsInToolTipLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:412
+#. i18n: ectx: property (text), widget (QLabel, memInToolTipLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:200
+#. i18n: ectx: property (text), widget (QLabel, tempInToolTipLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:328
+#. i18n: ectx: property (text), widget (QLabel, freqsInToolTipLabel)
+#. i18n: file: NVidiaMonitorConfig.ui:412
+#. i18n: ectx: property (text), widget (QLabel, memInToolTipLabel)
+#: rc.cpp:21 rc.cpp:36 rc.cpp:45 rc.cpp:21 rc.cpp:36 rc.cpp:45
+msgid "Show in Tool Tip"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:237
+#. i18n: ectx: property (text), widget (QLabel, frequenciesLabel)
+#: rc.cpp:24 rc.cpp:24
+msgid "Frequencies"
+msgstr ""
+
+#. i18n: file: NVidiaMonitorConfig.ui:365
+#. i18n: ectx: property (text), widget (QLabel, memoryLabel)
+#: rc.cpp:39 rc.cpp:39
+msgid "Memory Usage"
+msgstr ""
