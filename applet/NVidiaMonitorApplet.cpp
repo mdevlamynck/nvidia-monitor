@@ -64,7 +64,7 @@ namespace app
 		_sonLaunched(false)
 	{
 		setBackgroundHints(DefaultBackground);
-		setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+		setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
 		setHasConfigurationInterface(true);
 	}

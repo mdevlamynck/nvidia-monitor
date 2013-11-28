@@ -1,0 +1,10 @@
+# Ignored files
+
+# Build tmp files and generated
+build/*
+!build/**/.cmake
+!build/*.in
+
+# vim tmp files
+**/.*.swp
+**/tags

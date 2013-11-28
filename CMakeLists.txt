@@ -10,7 +10,7 @@ project(plasma_applet_nvidia-monitor)
 	kde4_add_ui_files(nvidia-monitor-applet-src NVidiaMonitorConfig.ui)
 	 
 	kde4_add_plugin(${PROJECT_NAME} ${nvidia-monitor-applet-src})
-	target_link_libraries(${PROJECT_NAME} ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS} plasma_applet-system-monitor)
+	target_link_libraries(${PROJECT_NAME} ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS})
 	 
 	install(TARGETS ${PROJECT_NAME} DESTINATION ${PLUGIN_INSTALL_DIR})
 	 

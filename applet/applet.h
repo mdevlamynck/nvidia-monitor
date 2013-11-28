@@ -48,11 +48,8 @@ class SM_EXPORT Applet : public Plasma::Applet
         ~Applet();
 
         virtual void constraintsEvent(Plasma::Constraints constraints);
-        void save(KConfigGroup &config) const;
-        void saveConfig(KConfigGroup &config);
 
     public Q_SLOTS:
-        void toolTipAboutToShow();
         void visualizationDestroyed(QObject *visualization);
 
     Q_SIGNALS:
@@ -62,19 +59,12 @@ class SM_EXPORT Applet : public Plasma::Applet
         qreal preferredItemHeight() { return m_preferredItemHeight; };
         void setPreferredItemHeight(qreal preferredItemHeight)
                 { m_preferredItemHeight = preferredItemHeight; };
-        QStringList sources() { return m_sources; };
-        void appendSource(const QString& source) { m_sources.append(source); };
-        void setSources(const QStringList& sources) { m_sources = sources; };
-        void clearSources() { m_sources.clear(); };
         void clear();
 
-        KConfigGroup config();
         void configureLayout();
         void removeLayout();
-        void connectToEngine();
-        void connectSource(const QString& source);
+        void reloadRender();
         QStringList connectedSources();
-        void disconnectSources();
         void checkGeometry();
         QGraphicsLinearLayout* mainLayout();
         Plasma::DataEngine* engine();
@@ -94,20 +84,14 @@ class SM_EXPORT Applet : public Plasma::Applet
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
     private:
-        uint m_interval;
         qreal m_preferredItemHeight;
         QString m_title;
         Plasma::Frame* m_header;
-        QStringList m_sources;
-        QStringList m_connectedSources;
-        Plasma::DataEngine *m_engine;
         QHash<QString, QWeakPointer<QGraphicsWidget> > m_visualizations;
-        QHash<QString, QString> m_toolTips;
         Qt::Orientation m_orientation;
         Plasma::IconWidget *m_noSourcesIcon;
         Mode m_mode;
         QGraphicsLinearLayout *m_mainLayout;
-        Plasma::Applet *m_configSource;
 };
 
 }
