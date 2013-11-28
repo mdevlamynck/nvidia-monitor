@@ -47,8 +47,6 @@ class SM_EXPORT Applet : public Plasma::Applet
         Applet(QObject *parent, const QVariantList &args);
         ~Applet();
 
-        virtual void constraintsEvent(Plasma::Constraints constraints);
-
     public Q_SLOTS:
         void visualizationDestroyed(QObject *visualization);
 
@@ -63,7 +61,6 @@ class SM_EXPORT Applet : public Plasma::Applet
 
         void configureLayout();
         void removeLayout();
-        void reloadRender();
         QStringList connectedSources();
         void checkGeometry();
         QGraphicsLinearLayout* mainLayout();
@@ -77,13 +74,12 @@ class SM_EXPORT Applet : public Plasma::Applet
         void setToolTip(const QString &source, const QString &tipContent);
         Mode mode();
         QGraphicsWidget* visualization(const QString& source);
-        virtual bool addVisualization(const QString& source);
         void appendVisualization(const QString& source, QGraphicsWidget *visualization);
         virtual void deleteVisualizations();
         void displayNoAvailableSources();
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-    private:
+    protected:
         qreal m_preferredItemHeight;
         QString m_title;
         Plasma::Frame* m_header;

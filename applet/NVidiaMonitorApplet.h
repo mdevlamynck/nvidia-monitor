@@ -136,6 +136,9 @@ namespace app
 		inline 
 		bool			checkStateToBool				(Qt::CheckState state);
 
+        void reloadRender();
+        virtual void constraintsEvent(Plasma::Constraints constraints);
+
 	/**********************************************************************************************/
 
 	private:

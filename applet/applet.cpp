@@ -17,6 +17,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <iostream>
 #include "applet.h"
 #include <math.h>
 #include <Plasma/DataEngine>
@@ -49,43 +50,6 @@ Applet::~Applet()
     removeLayout();
 }
 
-void Applet::constraintsEvent(Plasma::Constraints constraints)
-{
-    if (constraints & Plasma::FormFactorConstraint) {
-        if (m_mode == Monitor) {
-            setBackgroundHints(NoBackground);
-            m_orientation = Qt::Vertical;
-        } else {
-            SM::Applet::Mode mode = m_mode;
-            switch (formFactor()) {
-                case Plasma::Planar:
-                case Plasma::MediaCenter:
-                    mode = Desktop;
-                    m_orientation = Qt::Vertical;
-                    break;
-                case Plasma::Horizontal:
-                    mode = Panel;
-                    m_orientation = Qt::Horizontal;
-                    break;
-                case Plasma::Vertical:
-                    mode = Panel;
-                    m_orientation = Qt::Vertical;
-                    break;
-
-				case Plasma::Application:
-				default:
-					break;
-            }
-            if (mode != m_mode) {
-                m_mode = mode;
-                reloadRender();
-            }
-        }
-    } else if (constraints & Plasma::SizeConstraint) {
-        checkGeometry();
-    }
-}
-
 void Applet::setTitle(const QString& title)
 {
     m_title = title;
@@ -110,8 +74,6 @@ void Applet::removeLayout()
     if (!m_mainLayout) {
         return;
     }
-
-    deleteVisualizations();
 
     // reset it to no configuration
     // assumes that this only gets called when there's
@@ -138,21 +100,6 @@ void Applet::configureLayout()
         m_header->setText(m_title);
         mainLayout()->addItem(m_header);
     }
-}
-
-void Applet::reloadRender()
-{
-    removeLayout();
-    configureLayout();
-
-    if (m_visualizations.isEmpty()){
-        displayNoAvailableSources();
-        constraintsEvent(Plasma::SizeConstraint);
-        return;
-    }
-
-    mainLayout()->activate();
-    constraintsEvent(Plasma::SizeConstraint);
 }
 
 void Applet::checkGeometry()

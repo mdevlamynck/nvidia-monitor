@@ -27,6 +27,7 @@
 	If you wish to make a fork or maintain this project, please contact me.
 */
 
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
@@ -39,6 +40,7 @@
 #include <Plasma/ToolTipContent>
 #include <QtGui/QGraphicsSceneMouseEvent>
 #include <QtDBus/QDBusInterface>
+#include <QGraphicsLinearLayout>
 
 #include <plasma/theme.h>
 
@@ -164,6 +166,7 @@ namespace app
 	{
 		SM::Plotter* plotter = new SM::Plotter(this);
 		plotter->setTitle(i18n(title.c_str()));
+		std::cout << "Analog ? " << _isAnalog << " && " << mode() << " = " << SM::Applet::Panel << std::endl;
 		plotter->setAnalog(_isAnalog && mode() != SM::Applet::Panel);
 		plotter->setMinMax(min, max);
 		plotter->setUnit(i18n(symbol.c_str()));
@@ -177,6 +180,8 @@ namespace app
 	void NVidiaMonitorApplet::updateVisualizationsConfig()
 	{
 		deleteVisualizations();
+
+		reloadRender();
 
 		if(_sources["temperature"]._isInApplet)
 			(this->*(_sources["temperature"]._addVisualization))();
@@ -502,6 +507,65 @@ namespace app
 	{
 		return (state == Qt::Checked || state == Qt::PartiallyChecked) ? true : false;
 	}
+
+	void NVidiaMonitorApplet::constraintsEvent(Plasma::Constraints constraints)
+	{
+		if (constraints & Plasma::FormFactorConstraint) {
+			if (m_mode == Monitor) {
+				setBackgroundHints(NoBackground);
+				m_orientation = Qt::Vertical;
+			} else {
+				SM::Applet::Mode mode = m_mode;
+				switch (formFactor()) {
+					case Plasma::Planar:
+					case Plasma::MediaCenter:
+						mode = Desktop;
+						m_orientation = Qt::Vertical;
+						break;
+					case Plasma::Horizontal:
+						mode = Panel;
+						m_orientation = Qt::Horizontal;
+						break;
+					case Plasma::Vertical:
+						mode = Panel;
+						m_orientation = Qt::Vertical;
+						break;
+
+					case Plasma::Application:
+					default:
+						mode = Panel;
+						m_orientation = Qt::Vertical;
+						break;
+				}
+				if (mode != m_mode) {
+					std::cout << "Update mode " << mode << std::endl;
+					m_mode = mode;
+					updateVisualizationsConfig();
+				}
+			}
+		} else if (constraints & Plasma::SizeConstraint) {
+			checkGeometry();
+		}
+	}
+
+	void NVidiaMonitorApplet::reloadRender()
+	{
+		removeLayout();
+		configureLayout();
+
+		if (!_sources["temperature"]._isInApplet &&
+			!_sources["frequencies"]._isInApplet &&
+			!_sources["memory-usage"]._isInApplet)
+		{
+			displayNoAvailableSources();
+			constraintsEvent(Plasma::SizeConstraint);
+			return;
+		}
+
+		mainLayout()->activate();
+		constraintsEvent(Plasma::SizeConstraint);
+	}
+
 
 } // namespace app
 
