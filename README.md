@@ -9,7 +9,7 @@ ArchLinux users, just use the aur pkg : [kdeplasma-addons-applets-nvidia-monitor
 
 Go in the cloned repo and compile the project :
 
-```shell
+```sh
 mkdir build
 cd build
 cmake .. -DCMAKE_INSTALL_PREFIX="$(kde4-config --prefix)" -DCMAKE_BUILD_TYPE=Release
