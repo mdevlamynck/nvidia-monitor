@@ -149,7 +149,7 @@ namespace app
 		// Create first connection to DataEngine
 		Plasma::DataEngine * engine = dataEngine("nvidia-monitor");
 		if(engine->isValid())
-			engine->connectSource("bumblebee", this);
+			engine->connectSource("bumblebee", this, 2000);
 
 		updateSources();
 
@@ -192,7 +192,7 @@ namespace app
 
 		reloadRender();
 
-		if(_isBumblebee && _isCgOn)
+		if(_isBumblebee && !_isCgOn)
 			displayBumblebeeOff();
 
 		else
@@ -343,9 +343,9 @@ namespace app
 			}
 			else 
 			{
-				bool cgOn = _isCgOn;
-
 				_isBumblebee = true;
+
+				bool cgOn = _isCgOn;
 				if(data["status"].toString() == "on")
 					cgOn = true;
 				else

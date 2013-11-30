@@ -199,12 +199,16 @@ namespace eng
 	 */
 	bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & name)
 	{
+		if(name == "bumblebee")
+		{
+			isCgOn();
+			return true;
+		}
+
 		SourceMap::const_iterator it = _sources.find(name);
 
-		if(it != _sources.end() && it->second._update != NULL)
+		if(it != _sources.end() && it->second._update != NULL && (this->*(it->second._update))())
 		{
-			(this->*(it->second._update))();
-
 			DataMap::const_iterator data;
 
 			for(data = it->second._data.begin(); data != it->second._data.end(); data++)
@@ -228,7 +232,7 @@ namespace eng
 			if(isCgOn())
 				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q GPUCoreTemp -t");
 			else
-				return false;
+				return true;
 		else
 			output = executeCommand("nvidia-settings -q GPUCoreTemp -t");
 
@@ -259,7 +263,7 @@ namespace eng
 			if(isCgOn())
 				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed -e 's/,/\\n/'");
 			else
-				return false;
+				return true;
 		}
 		else
 			output = executeCommand("nvidia-settings -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed  -e 's/,/\\n/'");
@@ -294,7 +298,7 @@ namespace eng
 			if(isCgOn())
 				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/UsedDedicatedGPUMemory -t");
 			else
-				return false;
+				return true;
 		}
 		else
 			output = executeCommand("nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t");
