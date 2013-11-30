@@ -330,34 +330,27 @@ namespace app
 	 */
 	void NVidiaMonitorApplet::dataUpdated(QString const & sourceName, Plasma::DataEngine::Data const & data)
 	{
-		qDebug() << "Update";
-
 		if(data.isEmpty())
 			return;
 
 		if(sourceName == "bumblebee")
 		{
-			qDebug() << "bb status update";
 			if(data["status"].toString() == "no_bb")
 			{
-				qDebug() << "no_bb";
 				_isBumblebee = false;
 				_isCgOn = true;
 			}
 			else 
 			{
-				qDebug() << "bb";
 				_isBumblebee = true;
 
 				bool cgOn = _isCgOn;
 				if(data["status"].toString() == "on")
 				{
-					qDebug() << "on";
 					cgOn = true;
 				}
 				else
 				{
-					qDebug() << "off";
 					cgOn = false;
 				}
 
@@ -370,7 +363,6 @@ namespace app
 		}
 		else
 		{
-			qDebug() << "Data";
 			SourceMap::iterator it = _sources.find(sourceName);
 			if(it != _sources.end())
 			{
@@ -548,16 +540,6 @@ namespace app
 			content += i18n("Frenquencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>", freqs["level"]._data, freqs["graphic"]._data, freqs["memory"]._data, freqs["processor"]._data);
 		if(_sources["memory-usage"]._isInToolTip)
 			content += i18n("Memory Usage : %1% (%2 / %3 Mo)<br/>", mem["percentage"]._data, mem["used"]._data, mem["total"]._data);
-
-		if(_isBumblebee)
-			content += "BB<br/>";
-		else
-			content += "NO_BB<br/>";
-
-		if(_isCgOn)
-			content += "ON<br/>";
-		else
-			content += "OFF<br/>";
 
 		Plasma::ToolTipManager::self()->setContent(this, Plasma::ToolTipContent(title(), content, KIcon(icon())));
 	}
