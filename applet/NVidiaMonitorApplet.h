@@ -147,6 +147,8 @@ namespace app
 		typedef	std::map<QString, DataSource>	SourceMap;
 
 		SourceMap				_sources;
+		bool					_isBumblebee;
+		bool					_isCgOn;
 
 		// The plasmoid configuration 
 		Ui::NVidiaMonitorConfig	_configUi;

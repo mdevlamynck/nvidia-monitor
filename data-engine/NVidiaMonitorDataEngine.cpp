@@ -27,6 +27,7 @@
 	If you wish to make a fork or maintain this project, please contact me.
 */
 
+#include <iostream>
 #include <sstream>
 #include <stdio.h>
 
@@ -68,27 +69,29 @@ namespace eng
 		_sources["frequencies"]		= DataSource(&NVidiaMonitorDataEngine::updateFreqs);
 		_sources["memory-usage"]	= DataSource(&NVidiaMonitorDataEngine::updateMem);
 
+		initBumblebee();
+		std::cout << "bb : " << _isBumblebee << std::endl;
+
 		if(initMem())
 			setData("memory-usage", "total", _sources["memory-usage"]._data["total"]);
-
-		initBumblebee();
 	}
 
 	/**
 	 * Detect either this is a bumblebee setup or a regular one
-	 * \return Either the function succeeded or not
 	 */
-	bool NVidiaMonitorDataEngine::initBumblebee()
+	void NVidiaMonitorDataEngine::initBumblebee()
 	{
-		std::string output = executeCommand("[ -f /proc/acpi/bbswitch ] && echo yes || echo no");
+		std::string output = executeCommand("[ -f /proc/acpi/bbswitch ] && printf yes || printf no");
 		if(output == "yes")
+		{
+			setData("bumblebee", "status", "off");
 			_isBumblebee = true;
-		else if(output == "no")
-			_isBumblebee = false;
+		}
 		else
-			return false;
-
-		return true;
+		{
+			setData("bumblebee", "status", "no_bb");
+			_isBumblebee = false;
+		}
 	}
 
 	/**
@@ -149,14 +152,21 @@ namespace eng
 	 */
 	bool NVidiaMonitorDataEngine::isCgOn()
 	{
-		std::string output = executeCommand("cat /proc/acpi/bumblebee");
+		std::string output = executeCommand("cat /proc/acpi/bbswitch");
 
+		std::cout << output << std::endl;
 		if(output != "")
 		{
 			if(output.find("ON") != std::string::npos)
+			{
+				setData("bumblebee", "status", "on");
 				return true;
+			}
 			else
+			{
+				setData("bumblebee", "status", "off");
 				return false;
+			}
 		}
 		else
 			return false;
@@ -247,28 +257,22 @@ namespace eng
 		if(_isBumblebee)
 		{
 			if(isCgOn())
-				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q GPUCurrentPerfLevel -t");
+				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed -e 's/,/\\n/'");
 			else
 				return false;
 		}
 		else
-			output = executeCommand("nvidia-settings -q GPUCurrentPerfLevel -t");
+			output = executeCommand("nvidia-settings -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed  -e 's/,/\\n/'");
 
 		if(output != "")
 		{
 			istringstream	data(output);
 			eng::DataMap &	freqs = _sources["frequencies"]._data;
 
-			int i;
 			data >> freqs["level"];
-			data >> i;
 			data >> freqs["graphic"];
 			data >> freqs["memory"];
-			data >> i;
-			data >> i;
 			data >> freqs["processor"];
-			data >> i;
-			data >> i;
 
 			return true;
 		}

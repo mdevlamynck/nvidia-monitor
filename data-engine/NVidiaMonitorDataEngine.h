@@ -68,7 +68,7 @@ namespace eng
 	protected:
 
 		bool		initMem						();
-		bool		initBumblebee				();
+		void		initBumblebee				();
 
 	/*
 	 * Data Handling

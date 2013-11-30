@@ -1,4 +1,5 @@
 # ------------------ Applet ----------------------
+cmake_minimum_required(VERSION 2.8)
 project(plasma_applet_nvidia-monitor)
  
 	find_package(KDE4 REQUIRED)

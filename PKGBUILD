@@ -13,7 +13,6 @@ arch=('i686' 'x86_64')
 license=('GPL')
 depends=('nvidia-utils')
 makedepends=('git' 'cmake' 'kdeplasma-addons-libs')
-conflicts=('bumblebee')
 
 source=("git+${_gitrepo}")
 install=nvidia-monitor.install
@@ -26,7 +25,7 @@ pkgver() {
 
 build () {
 	cd "${srcdir}/${_gitname}"
-	git checkout $(git tag|sort -V|tail -1)
+	git checkout bumblebee
 	mkdir -p build
 	cd build
 	cmake .. -DCMAKE_INSTALL_PREFIX="${pkgdir}/$(kde4-config --prefix)" -DCMAKE_BUILD_TYPE=Release

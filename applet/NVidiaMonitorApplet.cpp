@@ -62,6 +62,8 @@ namespace app
 	 */
 	NVidiaMonitorApplet::NVidiaMonitorApplet(QObject *parent, const QVariantList &args) :
 		SM::Applet(parent, args),
+		_isBumblebee(false),
+		_isCgOn(false),
 		_isAnalog(true),
 		_sonLaunched(false)
 	{
@@ -80,6 +82,9 @@ namespace app
 		Plasma::DataEngine * engine = dataEngine("nvidia-monitor");
 		if(engine->isValid())
 		{
+
+			engine->disconnectSource("bumblebee", this);
+
 			SourceMap::iterator it;
 			for(it = _sources.begin(); it != _sources.end(); it++)
 			{
@@ -141,6 +146,10 @@ namespace app
 		Plasma::ToolTipManager::self()->registerWidget(this);
 
 		// Create first connection to DataEngine
+		Plasma::DataEngine * engine = dataEngine("nvidia-monitor");
+		if(engine->isValid())
+			engine->connectSource("bumblebee", this);
+
 		updateSources();
 
 		// Create first display
@@ -304,17 +313,36 @@ namespace app
 		if(data.isEmpty())
 			return;
 
-		SourceMap::iterator it = _sources.find(sourceName);
-		if(it != _sources.end())
+		if(sourceName == "bumblebee")
 		{
-			DataMap::iterator dataIt;
+			if(data["status"] == "no_bb")
+			{
+				_isBumblebee = false;
+				_isCgOn = true;
+			}
+			else 
+			{
+				_isBumblebee = true;
+				if(data["status"] == "on")
+					_isCgOn = true;
+				else
+					_isCgOn = false;
+			}
+		}
+		else
+		{
+			SourceMap::iterator it = _sources.find(sourceName);
+			if(it != _sources.end())
+			{
+				DataMap::iterator dataIt;
 
-			// Update data in container
-			for(dataIt = it->second._data.begin(); dataIt != it->second._data.end(); dataIt++)
-				dataIt->second._data = data[dataIt->first].toInt();
+				// Update data in container
+				for(dataIt = it->second._data.begin(); dataIt != it->second._data.end(); dataIt++)
+					dataIt->second._data = data[dataIt->first].toInt();
 
-			// Update visualization
-			(this->*(it->second._updateVisualization))();
+				// Update visualization
+				(this->*(it->second._updateVisualization))();
+			}
 		}
 
 		if (Plasma::ToolTipManager::self()->isVisible(this))
