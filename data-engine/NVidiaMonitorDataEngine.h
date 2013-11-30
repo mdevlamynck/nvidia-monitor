@@ -68,6 +68,7 @@ namespace eng
 	protected:
 
 		bool		initMem						();
+		bool		initBumblebee				();
 
 	/*
 	 * Data Handling
@@ -77,6 +78,8 @@ namespace eng
 		QStringList	sources						() const;
 
 	protected:
+
+		bool		isCgOn						();
 
 		bool		sourceRequestEvent			(QString const & name);
 		bool		updateSourceEvent			(QString const & name);
@@ -99,6 +102,7 @@ namespace eng
 		typedef std::map<QString, DataSource>	SourceMap;
 
 		SourceMap	_sources;
+		bool		_isBumblebee;
 
 	}; // class NVidiaMonitorDataEngine
 

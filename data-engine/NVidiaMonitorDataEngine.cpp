@@ -70,14 +70,42 @@ namespace eng
 
 		if(initMem())
 			setData("memory-usage", "total", _sources["memory-usage"]._data["total"]);
+
+		initBumblebee();
+	}
+
+	/**
+	 * Detect either this is a bumblebee setup or a regular one
+	 * \return Either the function succeeded or not
+	 */
+	bool NVidiaMonitorDataEngine::initBumblebee()
+	{
+		std::string output = executeCommand("[ -f /proc/acpi/bbswitch ] && echo yes || echo no");
+		if(output == "yes")
+			_isBumblebee = true;
+		else if(output == "no")
+			_isBumblebee = false;
+		else
+			return false;
+
+		return true;
 	}
 
 	/**
 	 * Get the GPU Total VRam used to calcul the percentage of used memory
+	 * \return Either the function succeeded or not
 	 */
 	bool NVidiaMonitorDataEngine::initMem()
 	{
-		std::string output = executeCommand("nvidia-settings -q [gpu:0]/TotalDedicatedGPUMemory -t");
+		std::string output;
+
+		if(_isBumblebee)
+			if(isCgOn())
+				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/TotalDedicatedGPUMemory -t");
+			else
+				return false;
+		else
+			output = executeCommand("nvidia-settings -q [gpu:0]/TotalDedicatedGPUMemory -t");
 		if(output != "")
 		{
 			istringstream	data(output.c_str());
@@ -105,12 +133,33 @@ namespace eng
 		QStringList list;
 		SourceMap::const_iterator it;
 
+		list << "bumblebee";
+
 		for(it = _sources.begin(); it != _sources.end(); it++)
 		{
 			list << it->first;
 		}
 
 		return list;
+	}
+
+	/**
+	 * Detect if the cg is on when using bumblbee
+	 * \return Either the cg is currently on or not
+	 */
+	bool NVidiaMonitorDataEngine::isCgOn()
+	{
+		std::string output = executeCommand("cat /proc/acpi/bumblebee");
+
+		if(output != "")
+		{
+			if(output.find("ON") != std::string::npos)
+				return true;
+			else
+				return false;
+		}
+		else
+			return false;
 	}
 
 	/**
@@ -121,6 +170,9 @@ namespace eng
 	 */
 	bool NVidiaMonitorDataEngine::sourceRequestEvent(QString const & name)
 	{
+		if(name == "bumblebee")
+			return true;
+
 		SourceMap::const_iterator it = _sources.find(name);
 
 		if(it == _sources.end())
@@ -157,10 +209,19 @@ namespace eng
 
 	/**
 	 * Update the value of the Temperature source
+	 * \return Either the function succeeded or not
 	 */
 	bool NVidiaMonitorDataEngine::updateTemp()
 	{
-		std::string output = executeCommand("nvidia-settings -q GPUCoreTemp -t");
+		std::string output;
+		if(_isBumblebee)
+			if(isCgOn())
+				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q GPUCoreTemp -t");
+			else
+				return false;
+		else
+			output = executeCommand("nvidia-settings -q GPUCoreTemp -t");
+
 		if(output != "")
 		{
 			istringstream	data(output);
@@ -177,10 +238,22 @@ namespace eng
 
 	/**
 	 * Update the values of the Frequncies source
+	 * \return Either the function succeeded or not
 	 */
 	bool NVidiaMonitorDataEngine::updateFreqs()
 	{
-		std::string output = executeCommand("nvidia-settings -q GPUCurrentPerfLevel -t && nvidia-settings -q GPUCurrentClockFreqs -t | sed 's/,/ /' && nvidia-settings -q GPUCurrentProcessorClockFreqs -t");
+		std::string output;
+
+		if(_isBumblebee)
+		{
+			if(isCgOn())
+				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q GPUCurrentPerfLevel -t");
+			else
+				return false;
+		}
+		else
+			output = executeCommand("nvidia-settings -q GPUCurrentPerfLevel -t");
+
 		if(output != "")
 		{
 			istringstream	data(output);
@@ -206,10 +279,22 @@ namespace eng
 
 	/**
 	 * Update the values of the Memory-Usage source
+	 * \return Either the function succeeded or not
 	 */
 	bool NVidiaMonitorDataEngine::updateMem()
 	{
-		std::string output = executeCommand("nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t");
+		std::string output;
+
+		if(_isBumblebee)
+		{
+			if(isCgOn())
+				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/UsedDedicatedGPUMemory -t");
+			else
+				return false;
+		}
+		else
+			output = executeCommand("nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t");
+
 		if(output != "")
 		{
 			istringstream	data(output.c_str());
@@ -236,6 +321,7 @@ namespace eng
 	 
 	/**
 	 * Execute a shell command and get its standard output
+	 * \param The command to execute
 	 * \return The standard output of the command
 	 */
 	std::string NVidiaMonitorDataEngine::executeCommand(const std::string & cmd) const
