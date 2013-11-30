@@ -35,6 +35,7 @@
 
 #include <QPainter>
 #include <QFontMetrics>
+#include <QString>
  	
 #include <Plasma/ToolTipManager>
 #include <Plasma/ToolTipContent>
@@ -175,7 +176,6 @@ namespace app
 	{
 		SM::Plotter* plotter = new SM::Plotter(this);
 		plotter->setTitle(i18n(title.c_str()));
-		std::cout << "Analog ? " << _isAnalog << " && " << mode() << " = " << SM::Applet::Panel << std::endl;
 		plotter->setAnalog(_isAnalog && mode() != SM::Applet::Panel);
 		plotter->setMinMax(min, max);
 		plotter->setUnit(i18n(symbol.c_str()));
@@ -192,14 +192,20 @@ namespace app
 
 		reloadRender();
 
-		if(_sources["temperature"]._isInApplet)
-			(this->*(_sources["temperature"]._addVisualization))();
+		if(_isBumblebee && _isCgOn)
+			displayBumblebeeOff();
 
-		if(_sources["frequencies"]._isInApplet)
-			(this->*(_sources["frequencies"]._addVisualization))();
+		else
+		{
+			if(_sources["temperature"]._isInApplet)
+				(this->*(_sources["temperature"]._addVisualization))();
 
-		if(_sources["memory-usage"]._isInApplet)
-			(this->*(_sources["memory-usage"]._addVisualization))();
+			if(_sources["frequencies"]._isInApplet)
+				(this->*(_sources["frequencies"]._addVisualization))();
+
+			if(_sources["memory-usage"]._isInApplet)
+				(this->*(_sources["memory-usage"]._addVisualization))();
+		}
 	}
 
 	/**
@@ -262,6 +268,21 @@ namespace app
 		}
 	}
 
+	/**
+	 * 
+	 */
+	void NVidiaMonitorApplet::displayBumblebeeOff()
+	{
+		displayNoAvailableSources();
+//		KIcon appletIcon(icon());
+//		m_noSourcesIcon = new Plasma::IconWidget(appletIcon, QString(), this);
+//		mainLayout()->addItem(m_noSourcesIcon);
+//
+//		m_preferredItemHeight = MINIMUM;
+//
+//		setConfigurationRequired(true, i18n("CG Off"));
+	}
+
 	/*************************************************************************************************
 	 * Data from DataEngine Handling
 	 *************************************************************************************************/
@@ -315,6 +336,7 @@ namespace app
 
 		if(sourceName == "bumblebee")
 		{
+			qDebug() << "LLLLOOOOOOOOOOOOOOOKKKKKKKK AAAAAAATTTTTTTT MMMMMEEEEEE" << data["status"];
 			if(data["status"] == "no_bb")
 			{
 				_isBumblebee = false;
@@ -322,11 +344,19 @@ namespace app
 			}
 			else 
 			{
+				bool cgOn = _isCgOn;
+
 				_isBumblebee = true;
 				if(data["status"] == "on")
-					_isCgOn = true;
+					cgOn = true;
 				else
-					_isCgOn = false;
+					cgOn = false;
+
+				if(cgOn != _isCgOn)
+				{
+					_isCgOn = cgOn;
+					updateVisualizationsConfig();
+				}
 			}
 		}
 		else
@@ -566,7 +596,6 @@ namespace app
 						break;
 				}
 				if (mode != m_mode) {
-					std::cout << "Update mode " << mode << std::endl;
 					m_mode = mode;
 					updateVisualizationsConfig();
 				}

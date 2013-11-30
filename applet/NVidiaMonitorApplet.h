@@ -90,6 +90,8 @@ namespace app
 		void			updateFreqsVisualization		();
 		void			updateMemVisualization			();
 
+		void			displayBumblebeeOff				();
+
 	/*
 	 * Data from DataEngine Handling
 	 */

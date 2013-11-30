@@ -25,7 +25,7 @@ pkgver() {
 
 build () {
 	cd "${srcdir}/${_gitname}"
-	git checkout bumblebee
+	git checkout v0.1
 	mkdir -p build
 	cd build
 	cmake .. -DCMAKE_INSTALL_PREFIX="${pkgdir}/$(kde4-config --prefix)" -DCMAKE_BUILD_TYPE=Release
