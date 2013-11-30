@@ -336,8 +336,7 @@ namespace app
 
 		if(sourceName == "bumblebee")
 		{
-			qDebug() << "LLLLOOOOOOOOOOOOOOOKKKKKKKK AAAAAAATTTTTTTT MMMMMEEEEEE" << data["status"];
-			if(data["status"] == "no_bb")
+			if(data["status"].toString() == "no_bb")
 			{
 				_isBumblebee = false;
 				_isCgOn = true;
@@ -347,7 +346,7 @@ namespace app
 				bool cgOn = _isCgOn;
 
 				_isBumblebee = true;
-				if(data["status"] == "on")
+				if(data["status"].toString() == "on")
 					cgOn = true;
 				else
 					cgOn = false;
@@ -538,6 +537,16 @@ namespace app
 			content += i18n("Frenquencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>", freqs["level"]._data, freqs["graphic"]._data, freqs["memory"]._data, freqs["processor"]._data);
 		if(_sources["memory-usage"]._isInToolTip)
 			content += i18n("Memory Usage : %1% (%2 / %3 Mo)<br/>", mem["percentage"]._data, mem["used"]._data, mem["total"]._data);
+
+		if(_isBumblebee)
+			content += "BB<br/>";
+		else
+			content += "NO_BB<br/>";
+
+		if(_isCgOn)
+			content += "ON<br/>";
+		else
+			content += "OFF<br/>";
 
 		Plasma::ToolTipManager::self()->setContent(this, Plasma::ToolTipContent(title(), content, KIcon(icon())));
 	}
