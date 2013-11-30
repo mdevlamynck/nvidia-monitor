@@ -27,7 +27,6 @@
 	If you wish to make a fork or maintain this project, please contact me.
 */
 
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
@@ -336,20 +335,29 @@ namespace app
 
 		if(sourceName == "bumblebee")
 		{
+			qDebug() << "bb status update";
 			if(data["status"].toString() == "no_bb")
 			{
+				qDebug() << "no_bb";
 				_isBumblebee = false;
 				_isCgOn = true;
 			}
 			else 
 			{
+				qDebug() << "bb";
 				_isBumblebee = true;
 
 				bool cgOn = _isCgOn;
 				if(data["status"].toString() == "on")
+				{
+					qDebug() << "on";
 					cgOn = true;
+				}
 				else
+				{
+					qDebug() << "off";
 					cgOn = false;
+				}
 
 				if(cgOn != _isCgOn)
 				{

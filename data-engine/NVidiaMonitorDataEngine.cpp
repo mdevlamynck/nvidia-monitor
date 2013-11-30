@@ -27,7 +27,6 @@
 	If you wish to make a fork or maintain this project, please contact me.
 */
 
-#include <iostream>
 #include <sstream>
 #include <stdio.h>
 
@@ -70,7 +69,6 @@ namespace eng
 		_sources["memory-usage"]	= DataSource(&NVidiaMonitorDataEngine::updateMem);
 
 		initBumblebee();
-		std::cout << "bb : " << _isBumblebee << std::endl;
 
 		if(initMem())
 			setData("memory-usage", "total", _sources["memory-usage"]._data["total"]);
@@ -154,7 +152,6 @@ namespace eng
 	{
 		std::string output = executeCommand("cat /proc/acpi/bbswitch");
 
-		std::cout << output << std::endl;
 		if(output != "")
 		{
 			if(output.find("ON") != std::string::npos)
