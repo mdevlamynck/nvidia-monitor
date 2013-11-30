@@ -330,6 +330,8 @@ namespace app
 	 */
 	void NVidiaMonitorApplet::dataUpdated(QString const & sourceName, Plasma::DataEngine::Data const & data)
 	{
+		qDebug() << "Update";
+
 		if(data.isEmpty())
 			return;
 
@@ -368,6 +370,7 @@ namespace app
 		}
 		else
 		{
+			qDebug() << "Data";
 			SourceMap::iterator it = _sources.find(sourceName);
 			if(it != _sources.end())
 			{
