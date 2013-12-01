@@ -148,7 +148,7 @@ namespace app
 		// Create first connection to DataEngine
 		Plasma::DataEngine * engine = dataEngine("nvidia-monitor");
 		if(engine->isValid())
-			engine->connectSource("bumblebee", this, 2000);
+			engine->connectSource("bumblebee", this);
 
 		updateSources();
 
@@ -537,7 +537,7 @@ namespace app
 		if(_sources["temperature"]._isInToolTip)
 			content += i18n("Temperature : %1 °C<br/>", temp["temperature"]._data);
 		if(_sources["frequencies"]._isInToolTip)
-			content += i18n("Frenquencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>", freqs["level"]._data, freqs["graphic"]._data, freqs["memory"]._data, freqs["processor"]._data);
+			content += i18n("Frequencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>", freqs["level"]._data, freqs["graphic"]._data, freqs["memory"]._data, freqs["processor"]._data);
 		if(_sources["memory-usage"]._isInToolTip)
 			content += i18n("Memory Usage : %1% (%2 / %3 Mo)<br/>", mem["percentage"]._data, mem["used"]._data, mem["total"]._data);
 
