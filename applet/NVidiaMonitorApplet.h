@@ -157,6 +157,8 @@ private:
 
 }; // class NVidiaMonitorApplet
 
+#include "NVidiaMonitorApplet.inl"
+
 } // namespace app
 
 K_EXPORT_PLASMA_APPLET(nvidia-monitor, app::NVidiaMonitorApplet)

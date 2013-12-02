@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 	NVidia Monitor - plasmoid that displays nvidia gpu's informations
 	Copyright (C) 2013 Matthias Devlamynck
@@ -25,8 +26,6 @@
 
 	If you wish to make a fork or maintain this project, please contact me.
 -->
-
-<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>NVidiaMonitorConfig</class>
  <widget class="QWidget" name="NVidiaMonitorConfig">
