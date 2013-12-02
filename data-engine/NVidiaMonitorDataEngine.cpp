@@ -1,7 +1,7 @@
  
 /*
 	NVidia Monitor - plasmoid that displays nvidia gpu's informations
-	Copyright (C) 2013  Matthias Devlamynck
+	Copyright (C) 2013 Matthias Devlamynck
 
 	This file is part of NVidia Monitor.
 
@@ -12,17 +12,17 @@
 
 	NVidia Monitor is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with NVidia Monitor.  If not, see <http://www.gnu.org/licenses/>.
+	along with NVidia Monitor. If not, see <http://www.gnu.org/licenses/>.
 
 	To contact me, please send me an email at :
-		wildfier@hotmail.fr
+		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		http://sourceforge.net/projects/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/	
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -37,318 +37,312 @@ using namespace std;
 namespace eng
 {
 
-	/**********************************************************************************************
-	 * Inits & Releases
-	 **********************************************************************************************/
+/**********************************************************************************************
+ * Inits & Releases
+ **********************************************************************************************/
 
-	/**
-	 * DataEngine Constructor
-	 * Called by the Plasma framework
-	 */
-	NVidiaMonitorDataEngine::NVidiaMonitorDataEngine(QObject *parent, const QVariantList &args) :
-		Plasma::DataEngine(parent, args)
-	{
-		setMinimumPollingInterval(1000);
-	} 
+/**
+ * DataEngine Constructor
+ * Called by the Plasma framework
+ */
+NVidiaMonitorDataEngine::NVidiaMonitorDataEngine(QObject* in_pParent, const QVariantList& in_args)
+	: Plasma::DataEngine(in_pParent, in_args)
+{
+	setMinimumPollingInterval(1000);
+} 
 
-	/**
-	 * DataEngine Destructor
-	 */
-	NVidiaMonitorDataEngine::~NVidiaMonitorDataEngine()
+/**
+ * DataEngine Destructor
+ */
+NVidiaMonitorDataEngine::~NVidiaMonitorDataEngine()
+{
+}
+
+/**
+ * Init the DataEngine
+ * Declare handled values
+ */
+void NVidiaMonitorDataEngine::init()
+{
+	m_smSources["temperature"]	= DataSource(&NVidiaMonitorDataEngine::updateTemp);
+	m_smSources["frequencies"]	= DataSource(&NVidiaMonitorDataEngine::updateFreqs);
+	m_smSources["memory-usage"]	= DataSource(&NVidiaMonitorDataEngine::updateMem);
+
+	initBumblebee();
+
+	if(initMem())
+		setData("memory-usage", "total", m_smSources["memory-usage"].p_dmData["total"]);
+}
+
+/**
+ * Detect either this is a bumblebee setup or a regular one
+ */
+void NVidiaMonitorDataEngine::initBumblebee()
+{
+	std::string strOutput = executeCommand("[ -f /proc/acpi/bbswitch ] && printf yes || printf no");
+	if(strOutput == "yes")
 	{
+		setData("bumblebee", "status", "off");
+		m_bIsBumblebee = true;
+	}
+	else
+	{
+		setData("bumblebee", "status", "no_bb");
+		m_bIsBumblebee = false;
+	}
+}
+
+/**
+ * Get the GPU Total VRam used to calcul the percentage of used memory
+ * \return Wether the function succeeded or not
+ */
+bool NVidiaMonitorDataEngine::initMem()
+{
+	std::string strOutput;
+
+	if(m_bIsBumblebee)
+		if(isCgOn())
+			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/TotalDedicatedGPUMemory -t");
+		else
+			return false;
+	else
+		strOutput = executeCommand("nvidia-settings -q [gpu:0]/TotalDedicatedGPUMemory -t");
+	if(strOutput != "")
+	{
+		istringstream	issData(strOutput.c_str());
+		eng::DataMap &	dmMem = m_smSources["memory-usage"].p_dmData;
+
+		issData >> dmMem["total"];
+
+		return true;
 	}
 
-	/**
-	 * Init the DataEngine
-	 * Declare handled values
-	 */
-	void NVidiaMonitorDataEngine::init()
+	else
+		return false;
+}
+
+/**********************************************************************************************
+ * Data Handling
+ **********************************************************************************************/
+ 
+/**
+ * Get the list of avaible sources provided by this DataEngine
+ * \return Avaible sources
+ */
+QStringList NVidiaMonitorDataEngine::sources() const
+{
+	QStringList					aAvaible;
+	SourceMap::const_iterator	itSources;
+
+	aAvaible << "bumblebee";
+
+	for(itSources = m_smSources.begin(); itSources != m_smSources.end(); itSources++)
 	{
-		_sources["temperature"]		= DataSource(&NVidiaMonitorDataEngine::updateTemp);
-		_sources["frequencies"]		= DataSource(&NVidiaMonitorDataEngine::updateFreqs);
-		_sources["memory-usage"]	= DataSource(&NVidiaMonitorDataEngine::updateMem);
-
-		initBumblebee();
-
-		if(initMem())
-			setData("memory-usage", "total", _sources["memory-usage"]._data["total"]);
+		aAvaible << itSources->first;
 	}
 
-	/**
-	 * Detect either this is a bumblebee setup or a regular one
-	 */
-	void NVidiaMonitorDataEngine::initBumblebee()
+	return aAvaible;
+}
+
+/**
+ * Detect if the cg is on when using bumblbee
+ * \return Wether the cg is currently on or not
+ */
+bool NVidiaMonitorDataEngine::isCgOn()
+{
+	std::string strOutput = executeCommand("cat /proc/acpi/bbswitch");
+
+	if(strOutput != "")
 	{
-		std::string output = executeCommand("[ -f /proc/acpi/bbswitch ] && printf yes || printf no");
-		if(output == "yes")
+		if(strOutput.find("ON") != std::string::npos)
+		{
+			setData("bumblebee", "status", "on");
+			return true;
+		}
+		else
 		{
 			setData("bumblebee", "status", "off");
-			_isBumblebee = true;
-		}
-		else
-		{
-			setData("bumblebee", "status", "no_bb");
-			_isBumblebee = false;
-		}
-	}
-
-	/**
-	 * Get the GPU Total VRam used to calcul the percentage of used memory
-	 * \return Either the function succeeded or not
-	 */
-	bool NVidiaMonitorDataEngine::initMem()
-	{
-		std::string output;
-
-		if(_isBumblebee)
-			if(isCgOn())
-				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/TotalDedicatedGPUMemory -t");
-			else
-				return false;
-		else
-			output = executeCommand("nvidia-settings -q [gpu:0]/TotalDedicatedGPUMemory -t");
-		if(output != "")
-		{
-			istringstream	data(output.c_str());
-			eng::DataMap &	mem = _sources["memory-usage"]._data;
-
-			data >> mem["total"];
-
-			return true;
-		}
-
-		else
 			return false;
+		}
+	}
+	else
+		return false;
+}
+
+/**
+ * Update the value(s) of a source
+ * Called when an applet asks for the value of a source
+ * \param in_qstrName Asked source in_qstrName
+ * \return Wether the value will by updated or not
+ */
+bool NVidiaMonitorDataEngine::sourceRequestEvent(QString const & in_qstrName)
+{
+	if(in_qstrName == "bumblebee")
+		return true;
+
+	SourceMap::const_iterator itSources = m_smSources.find(in_qstrName);
+
+	if(itSources == m_smSources.end())
+		return false;
+	else
+		return updateSourceEvent(in_qstrName);
+}
+
+/**
+ * Update the value(s) of a source
+ * Called when the interval between two updated has expired
+ * \param in_qstrName Name of the source to update
+ * \return Wether the value will by updated or not
+ */
+bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
+{
+	if(in_qstrName == "bumblebee")
+	{
+		isCgOn();
+		return true;
 	}
 
-	/**********************************************************************************************
-	 * Data Handling
-	 **********************************************************************************************/
-	 
-	/**
-	 * Get the list of avaible sources provided by this DataEngine
-	 * \return Avaible sources
-	 */
-	QStringList NVidiaMonitorDataEngine::sources() const
+	SourceMap::const_iterator itSources = m_smSources.find(in_qstrName);
+
+	if(itSources != m_smSources.end() && itSources->second.p_pdUpdate != NULL && (this->*(itSources->second.p_pdUpdate))())
 	{
-		QStringList list;
-		SourceMap::const_iterator it;
+		DataMap::const_iterator itData;
 
-		list << "bumblebee";
+		for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
+			setData(itSources->first, itData->first, itData->second);
 
-		for(it = _sources.begin(); it != _sources.end(); it++)
-		{
-			list << it->first;
-		}
-
-		return list;
+		return true;
 	}
+	else
+		return false;
+}
 
-	/**
-	 * Detect if the cg is on when using bumblbee
-	 * \return Either the cg is currently on or not
-	 */
-	bool NVidiaMonitorDataEngine::isCgOn()
+/**
+ * Update the value of the Temperature source
+ * \return Wether the function succeeded or not
+ */
+bool NVidiaMonitorDataEngine::updateTemp()
+{
+	std::string strOutput;
+	if(m_bIsBumblebee)
 	{
-		std::string output = executeCommand("cat /proc/acpi/bbswitch");
-
-		if(output != "")
-		{
-			if(output.find("ON") != std::string::npos)
-			{
-				setData("bumblebee", "status", "on");
-				return true;
-			}
-			else
-			{
-				setData("bumblebee", "status", "off");
-				return false;
-			}
-		}
+		if(isCgOn())
+			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q GPUCoreTemp -t");
 		else
-			return false;
-	}
-
-	/**
-	 * Update the value(s) of a source
-	 * Called when an applet asks for the value of a source
-	 * \param name Asked source name
-	 * \return Either the value will by updated or not
-	 */
-	bool NVidiaMonitorDataEngine::sourceRequestEvent(QString const & name)
-	{
-		if(name == "bumblebee")
 			return true;
-
-		SourceMap::const_iterator it = _sources.find(name);
-
-		if(it == _sources.end())
-			return false;
-		else
-			return updateSourceEvent(name);
 	}
+	else
+		strOutput = executeCommand("nvidia-settings -q GPUCoreTemp -t");
 
-	/**
-	 * Update the value(s) of a source
-	 * Called when the interval between two updated has expired
-	 * \param name Name of the source to update
-	 * \return Either the value will by updated or not
-	 */
-	bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & name)
+	if(strOutput != "")
 	{
-		if(name == "bumblebee")
-		{
-			isCgOn();
-			return true;
-		}
+		istringstream	issData(strOutput);
+		eng::DataMap &	dmTemp = m_smSources["temperature"].p_dmData;
 
-		SourceMap::const_iterator it = _sources.find(name);
+		issData >> dmTemp["temperature"];
 
-		if(it != _sources.end() && it->second._update != NULL && (this->*(it->second._update))())
-		{
-			DataMap::const_iterator data;
-
-			for(data = it->second._data.begin(); data != it->second._data.end(); data++)
-				setData(it->first, data->first, data->second);
-
-			return true;
-		}
-
-		else
-			return false;
+		return true;
 	}
+	else
+		return false;
+}
 
-	/**
-	 * Update the value of the Temperature source
-	 * \return Either the function succeeded or not
-	 */
-	bool NVidiaMonitorDataEngine::updateTemp()
+/**
+ * Update the values of the Frequncies source
+ * \return Wether the function succeeded or not
+ */
+bool NVidiaMonitorDataEngine::updateFreqs()
+{
+	std::string strOutput;
+
+	if(m_bIsBumblebee)
 	{
-		std::string output;
-		if(_isBumblebee)
-			if(isCgOn())
-				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q GPUCoreTemp -t");
-			else
-				return true;
+		if(isCgOn())
+			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed -e 's/,/\\n/'");
 		else
-			output = executeCommand("nvidia-settings -q GPUCoreTemp -t");
-
-		if(output != "")
-		{
-			istringstream	data(output);
-			eng::DataMap &	temp = _sources["temperature"]._data;
-
-			data >> temp["temperature"];
-
 			return true;
-		}
-
-		else
-			return false;
 	}
+	else
+		strOutput = executeCommand("nvidia-settings -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed  -e 's/,/\\n/'");
 
-	/**
-	 * Update the values of the Frequncies source
-	 * \return Either the function succeeded or not
-	 */
-	bool NVidiaMonitorDataEngine::updateFreqs()
+	if(strOutput != "")
 	{
-		std::string output;
+		istringstream	issData(strOutput);
+		eng::DataMap &	dmFreqs = m_smSources["frequencies"].p_dmData;
 
-		if(_isBumblebee)
-		{
-			if(isCgOn())
-				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed -e 's/,/\\n/'");
-			else
-				return true;
-		}
+		issData >> dmFreqs["level"];
+		issData >> dmFreqs["graphic"];
+		issData >> dmFreqs["memory"];
+		issData >> dmFreqs["processor"];
+
+		return true;
+	}
+	else
+		return false;
+}
+
+/**
+ * Update the values of the Memory-Usage source
+ * \return Wether the function succeeded or not
+ */
+bool NVidiaMonitorDataEngine::updateMem()
+{
+	std::string strOutput;
+
+	if(m_bIsBumblebee)
+	{
+		if(isCgOn())
+			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/UsedDedicatedGPUMemory -t");
 		else
-			output = executeCommand("nvidia-settings -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed  -e 's/,/\\n/'");
-
-		if(output != "")
-		{
-			istringstream	data(output);
-			eng::DataMap &	freqs = _sources["frequencies"]._data;
-
-			data >> freqs["level"];
-			data >> freqs["graphic"];
-			data >> freqs["memory"];
-			data >> freqs["processor"];
-
 			return true;
-		}
-
-		else
-			return false;
 	}
+	else
+		strOutput = executeCommand("nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t");
 
-	/**
-	 * Update the values of the Memory-Usage source
-	 * \return Either the function succeeded or not
-	 */
-	bool NVidiaMonitorDataEngine::updateMem()
+	if(strOutput != "")
 	{
-		std::string output;
+		istringstream	issData(strOutput.c_str());
+		eng::DataMap &	dmMem = m_smSources["memory-usage"].p_dmData;
 
-		if(_isBumblebee)
-		{
-			if(isCgOn())
-				output = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/UsedDedicatedGPUMemory -t");
-			else
-				return true;
-		}
-		else
-			output = executeCommand("nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t");
+		issData >> dmMem["used"];
 
-		if(output != "")
-		{
-			istringstream	data(output.c_str());
-			eng::DataMap &	mem = _sources["memory-usage"]._data;
+		if(dmMem["total"] > 0)
+			initMem();
 
-			data >> mem["used"];
+		if(dmMem["percentage"] != -1 && dmMem["total"] > 0)
+			dmMem["percentage"] = dmMem["used"] * 100 / dmMem["total"];
 
-			if(mem["total"] > 0)
-				initMem();
-
-			if(mem["percentage"] != -1 && mem["total"] > 0)
-				mem["percentage"] = mem["used"] * 100 / mem["total"];
-
-			return true;
-		}
-
-		else
-			return false;
+		return true;
 	}
+	else
+		return false;
+}
 
-	/**********************************************************************************************
-	 * Usefull
-	 **********************************************************************************************/
-	 
-	/**
-	 * Execute a shell command and get its standard output
-	 * \param The command to execute
-	 * \return The standard output of the command
-	 */
-	std::string NVidiaMonitorDataEngine::executeCommand(const std::string & cmd) const
-	{
-		FILE*			in;
-		char			buff[8];
-		ostringstream	result;
+/**********************************************************************************************
+ * Usefull
+ **********************************************************************************************/
+ 
+/**
+ * Execute a shell command and get its standard strOutput
+ * \param The command to execute
+ * \return The standard strOutput of the command
+ */
+std::string NVidiaMonitorDataEngine::executeCommand(const std::string & in_strCmd) const
+{
+	FILE*			fIn;
+	char			acBuff[8];
+	ostringstream	ossResult;
 
-		if(!( in = popen(cmd.c_str(), "r") ))
-		{
-			return "";
-		}
+	if(!( fIn = popen(in_strCmd.c_str(), "r") ))
+		return "";
 
-		while(fgets(buff, sizeof(buff), in)!=NULL)
-		{
-			result << buff;
-		}
-		pclose(in);
+	while(fgets(acBuff, sizeof(acBuff), fIn)!=NULL)
+		ossResult << acBuff;
 
-		return result.str();
-	}
+	pclose(fIn);
 
+	return ossResult.str();
+}
 
 } // namespace eng
 

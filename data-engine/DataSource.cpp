@@ -1,7 +1,7 @@
 
 /*
 	NVidia Monitor - plasmoid that displays nvidia gpu's informations
-	Copyright (C) 2013  Matthias Devlamynck
+	Copyright (C) 2013 Matthias Devlamynck
 
 	This file is part of NVidia Monitor.
 
@@ -12,17 +12,17 @@
 
 	NVidia Monitor is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with NVidia Monitor.  If not, see <http://www.gnu.org/licenses/>.
+	along with NVidia Monitor. If not, see <http://www.gnu.org/licenses/>.
 
 	To contact me, please send me an email at :
-		wildfier@hotmail.fr
+		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		http://sourceforge.net/projects/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/	
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -33,13 +33,14 @@
 
 namespace eng
 {
-	/**
-	 * DataSource Constructor
-	 */
-	DataSource::DataSource(Update update) :
-		_update(update)
-	{
-	}
+
+/**
+ * DataSource Constructor
+ */
+DataSource::DataSource(Update in_pdUpdate)
+	: p_pdUpdate(in_pdUpdate)
+{
+}
 
 } // namespace eng
 

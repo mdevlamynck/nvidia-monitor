@@ -1,7 +1,7 @@
 
 /*
 	NVidia Monitor - plasmoid that displays nvidia gpu's informations
-	Copyright (C) 2013  Matthias Devlamynck
+	Copyright (C) 2013 Matthias Devlamynck
 
 	This file is part of NVidia Monitor.
 
@@ -12,23 +12,23 @@
 
 	NVidia Monitor is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with NVidia Monitor.  If not, see <http://www.gnu.org/licenses/>.
+	along with NVidia Monitor. If not, see <http://www.gnu.org/licenses/>.
 
 	To contact me, please send me an email at :
-		wildfier@hotmail.fr
+		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		http://sourceforge.net/projects/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/	
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
 
-#ifndef ENG_NVIDIA_MONITOR_ENGINE_H
-#define ENG_NVIDIA_MONITOR_ENGINE_H
+#ifndef ENG__NVIDIA_MONITOR_ENGINE__H
+#define ENG__NVIDIA_MONITOR_ENGINE__H
 
 #include <map>
 #include <string>
@@ -45,68 +45,72 @@
 namespace eng
 {
 
-	/**
-	 * Provide Data about nvidia graphic cards using the proprietary driver (with nvidia-settings)
-	 * Uses Plasma::DataEngine to be able to get requests from plasmoids
-	 */
-	class NVidiaMonitorDataEngine : public Plasma::DataEngine
-	{
+/**
+ * Provide Data about nvidia graphic cards using the proprietary driver (with nvidia-settings)
+ * Uses Plasma::DataEngine to be able to get requests from plasmoids
+ */
+class NVidiaMonitorDataEngine : public Plasma::DataEngine
+{
 
-	// Needed to use signals/slots provided by Qt
-	Q_OBJECT
+// Needed to use signals/slots provided by Qt
+Q_OBJECT
 
-	/*
-	 * Inits & Releases
-	 */
-	public:
+/*
+ * Typdefs
+ */
+typedef std::map<QString, DataSource>	SourceMap;
 
-					NVidiaMonitorDataEngine		(QObject *parent, const QVariantList &args);
-					~NVidiaMonitorDataEngine	();
 
-		void		init						();
+/*
+ * Inits & Releases
+ */
+public:
 
-	protected:
+				NVidiaMonitorDataEngine		(QObject* in_pParent, const QVariantList& in_args);
+				~NVidiaMonitorDataEngine	();
 
-		bool		initMem						();
-		void		initBumblebee				();
+	void		init						();
 
-	/*
-	 * Data Handling
-	 */
-	 public:
+protected:
 
-		QStringList	sources						() const;
+	bool		initMem						();
+	void		initBumblebee				();
 
-	protected:
+/*
+ * Data Handling
+ */
+public:
 
-		bool		isCgOn						();
+	QStringList	sources						() const;
 
-		bool		sourceRequestEvent			(QString const & name);
-		bool		updateSourceEvent			(QString const & name);
+protected:
 
-		bool		updateTemp					();
-		bool		updateFreqs					();
-		bool		updateMem					();
+	bool		isCgOn						();
 
-	/*
-	 * Usefull
-	 */
-	protected:
+	bool		sourceRequestEvent			(QString const & in_qstrName);
+	bool		updateSourceEvent			(QString const & in_qstrName);
 
-		std::string	executeCommand				(const std::string& cmd) const;
+	bool		updateTemp					();
+	bool		updateFreqs					();
+	bool		updateMem					();
 
-	/**********************************************************************************************/
+/*
+ * Usefull
+ */
+protected:
 
-	protected:
+	std::string	executeCommand				(const std::string& in_strCmd) const;
 
-		typedef std::map<QString, DataSource>	SourceMap;
+/**********************************************************************************************/
 
-		SourceMap	_sources;
-		bool		_isBumblebee;
+protected:
 
-	}; // class NVidiaMonitorDataEngine
+	SourceMap	m_smSources;
+	bool		m_bIsBumblebee;
+
+}; // class NVidiaMonitorDataEngine
 
 } // namespace eng
 
-#endif // ENG_NVIDIA_MONITOR_ENGINE_H
+#endif // ENG__NVIDIA_MONITOR_ENGINE__H
 

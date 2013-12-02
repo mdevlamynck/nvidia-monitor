@@ -27,34 +27,27 @@
 	If you wish to make a fork or maintain this project, please contact me.
 */
 
-#include "DataSource.h"
+/*************************************************************************************************
+ * Usefull
+ *************************************************************************************************/
 
-namespace app
+/**
+ * Converts a boolean to a Qt::CheckState
+ * true	 	-> Qt::Checked
+ * false	-> Qt::Unchecked
+ */
+Qt::CheckState NVidiaMonitorApplet::boolToCheckState(bool state)
 {
+	return (state) ? Qt::Checked : Qt::Unchecked;
+}
 
-	/**
-	 * Data Constructor
-	 */
-	Data::Data()
-		: p_iData(0)
-	{
-	}
-
-	/**
-	 * DataSource Constructor
-	 * \param addVisualization The function to call to add the DataSource corresponding visualization to the Applet
-	 * \param updateVisualization The function to call to update the DataSource corresponding visualization in the Applet
-	 */
-	DataSource::DataSource(const AddVisualization in_pdAddVisualization, const UpdateVisualization in_pdUpdateVisualization)
-		: p_bIsConnected(false)
-		, p_bIsUpdated(false)
-		, p_bIsInApplet(true)
-		, p_bIsInToolTip(true)
-		, p_iPollingInterval(5000)
-		, p_pdAddVisualization(in_pdAddVisualization)
-		, p_pdUpdateVisualization(in_pdUpdateVisualization)
-	{
-	}
-
-} // namespace app
+/**
+ * Converts a Qt::CheckState to a boolean
+ * Qt::Checked or Qt::PartiallyChecked	-> true
+ * Qt::Unchecked						-> false
+ */
+bool NVidiaMonitorApplet::checkStateToBool(Qt::CheckState state)
+{
+	return (state == Qt::Checked || state == Qt::PartiallyChecked) ? true : false;
+}
 

@@ -7,7 +7,7 @@ Icon=hwinfo
 
 X-KDE-Library=plasma_engine_nvidia-monitor
 X-KDE-PluginInfo-Author=Matthias Devlamynck
-X-KDE-PluginInfo-Email=wildfier@hotmail.fr
+X-KDE-PluginInfo-Email=matthias.devlamynck@mailoo.org
 X-KDE-PluginInfo-Name=nvidia-monitor
 X-KDE-PluginInfo-Version=0.1
 X-KDE-PluginInfo-Website=
