@@ -291,7 +291,7 @@ void NVidiaMonitorApplet::displayBumblebeeOff()
  */
 void NVidiaMonitorApplet::updateSources()
 {
-	Plasma::DataEngine * pEngine = dataEngine("nvidia-monitSourcesor");
+	Plasma::DataEngine * pEngine = dataEngine("nvidia-monitor");
 	if(pEngine->isValid())
 	{
 		SourceMap::iterator itSources;
