@@ -6,7 +6,7 @@ _gitname=nvidia-monitor
 _gitrepo=https://github.com/mdevlamynck/nvidia-monitor.git
 url=https://github.com/mdevlamynck/nvidia-monitor
 pkgver=0.3
-pkgrel=1
+pkgrel=2
 pkgdesc="An applet that monitor nvidia GPU using nvidia-settings (using proprietary drivers). Not supporting SLI and bumblebee yet."
 
 arch=('i686' 'x86_64')

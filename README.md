@@ -1,7 +1,7 @@
 
 # nvidia-monitor
  
-An applet that monitor nvidia GPU using nvidia-settings (using proprietary drivers). Not supporting SLI and bumblebee yet.
+An applet that monitor nvidia GPU using nvidia-settings (using proprietary drivers). Not supporting SLI yet.
 
 ## Installation
 
