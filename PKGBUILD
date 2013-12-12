@@ -10,7 +10,7 @@ pkgrel=1
 pkgdesc="An applet that monitor nvidia GPU using nvidia-settings (using proprietary drivers). Not supporting SLI and bumblebee yet."
 
 arch=('i686' 'x86_64')
-license=('GPL')
+license=('GPL3')
 depends=('nvidia-utils' 'kdebase-workspace')
 makedepends=('git' 'cmake' 'kdeplasma-addons-libs')
 
