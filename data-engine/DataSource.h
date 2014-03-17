@@ -22,7 +22,7 @@
 		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		https://github.com/mdevlamynck/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -32,6 +32,7 @@
 
 #include <vector>
 #include <map>
+#include <inttypes.h>
 
 #include <QString>
 
@@ -46,7 +47,7 @@ class NVidiaMonitorDataEngine;
 /**********************************************************************************************
  * Typedefs
  **********************************************************************************************/
-typedef	std::map<QString, int>	DataMap;
+typedef	std::map<QString, int32_t>	DataMap;
 typedef	bool(NVidiaMonitorDataEngine::*Update)(void);
 
 /**

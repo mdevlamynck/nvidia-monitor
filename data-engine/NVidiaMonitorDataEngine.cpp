@@ -1,4 +1,4 @@
- 
+
 /*
 	NVidia Monitor - plasmoid that displays nvidia gpu's informations
 	Copyright (C) 2013 Matthias Devlamynck
@@ -22,7 +22,7 @@
 		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		https://github.com/mdevlamynck/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -47,9 +47,11 @@ namespace eng
  */
 NVidiaMonitorDataEngine::NVidiaMonitorDataEngine(QObject* in_pParent, const QVariantList& in_args)
 	: Plasma::DataEngine(in_pParent, in_args)
+	, m_pXDisplay		(NULL)
+	, m_strXDisplayId	(":0")
 {
 	setMinimumPollingInterval(1000);
-} 
+}
 
 /**
  * DataEngine Destructor
@@ -69,9 +71,6 @@ void NVidiaMonitorDataEngine::init()
 	m_smSources["memory-usage"]	= DataSource(&NVidiaMonitorDataEngine::updateMem);
 
 	initBumblebee();
-
-	if(initMem())
-		setData("memory-usage", "total", m_smSources["memory-usage"].p_dmData["total"]);
 }
 
 /**
@@ -92,39 +91,10 @@ void NVidiaMonitorDataEngine::initBumblebee()
 	}
 }
 
-/**
- * Get the GPU Total VRam used to calcul the percentage of used memory
- * \return Wether the function succeeded or not
- */
-bool NVidiaMonitorDataEngine::initMem()
-{
-	std::string strOutput;
-
-	if(m_bIsBumblebee)
-		if(isCgOn())
-			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/TotalDedicatedGPUMemory -t");
-		else
-			return false;
-	else
-		strOutput = executeCommand("nvidia-settings -q [gpu:0]/TotalDedicatedGPUMemory -t");
-	if(strOutput != "")
-	{
-		istringstream	issData(strOutput.c_str());
-		eng::DataMap &	dmMem = m_smSources["memory-usage"].p_dmData;
-
-		issData >> dmMem["total"];
-
-		return true;
-	}
-
-	else
-		return false;
-}
-
 /**********************************************************************************************
  * Data Handling
  **********************************************************************************************/
- 
+
 /**
  * Get the list of avaible sources provided by this DataEngine
  * \return Avaible sources
@@ -223,28 +193,33 @@ bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
  */
 bool NVidiaMonitorDataEngine::updateTemp()
 {
-	std::string strOutput;
-	if(m_bIsBumblebee)
-	{
-		if(isCgOn())
-			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q GPUCoreTemp -t");
-		else
-			return true;
-	}
-	else
-		strOutput = executeCommand("nvidia-settings -q GPUCoreTemp -t");
-
-	if(strOutput != "")
-	{
-		istringstream	issData(strOutput);
-		eng::DataMap &	dmTemp = m_smSources["temperature"].p_dmData;
-
-		issData >> dmTemp["temperature"];
-
-		return true;
-	}
-	else
+	// Open X11 Display
+	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
+	if(!m_pXDisplay)
 		return false;
+
+	// Check if connected to a nvidia GPU
+	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
+	{
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	// Query GPU temperature
+	int32_t temp;
+
+	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &temp))
+	{
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	eng::DataMap &	dmTemp	= m_smSources["temperature"].p_dmData;
+	dmTemp["temperature"]	= temp;
+
+	XCloseDisplay(m_pXDisplay);
+
+	return true;
 }
 
 /**
@@ -253,32 +228,50 @@ bool NVidiaMonitorDataEngine::updateTemp()
  */
 bool NVidiaMonitorDataEngine::updateFreqs()
 {
-	std::string strOutput;
-
-	if(m_bIsBumblebee)
-	{
-		if(isCgOn())
-			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed -e 's/,/\\n/'");
-		else
-			return true;
-	}
-	else
-		strOutput = executeCommand("nvidia-settings -q [gpu:0]/GPUCurrentPerfLevel -q [gpu:0]/GPUCurrentClockFreqs -q [gpu:0]/GPUCurrentProcessorClockFreqs -t | sed  -e 's/,/\\n/'");
-
-	if(strOutput != "")
-	{
-		istringstream	issData(strOutput);
-		eng::DataMap &	dmFreqs = m_smSources["frequencies"].p_dmData;
-
-		issData >> dmFreqs["level"];
-		issData >> dmFreqs["graphic"];
-		issData >> dmFreqs["memory"];
-		issData >> dmFreqs["processor"];
-
-		return true;
-	}
-	else
+	// Open X11 Display
+	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
+	if(!m_pXDisplay)
 		return false;
+
+	// Check if connected to a nvidia GPU
+	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
+	{
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	// Query GPU Frequencies
+	int32_t level;
+	int16_t graphicMemory[2];
+	int32_t processor;
+
+	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PERFORMANCE_LEVEL, &level))
+	{
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_CLOCK_FREQS, (int32_t*) graphicMemory))
+	{
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PROCESSOR_CLOCK_FREQS, &processor))
+	{
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	eng::DataMap &	dmFreqs = m_smSources["frequencies"].p_dmData;
+	dmFreqs["level"]		= level;
+	dmFreqs["memory"]		= graphicMemory[0];
+	dmFreqs["graphic"]		= graphicMemory[1];
+	dmFreqs["processor"]	= processor;
+
+	XCloseDisplay(m_pXDisplay);
+
+	return true;
 }
 
 /**
@@ -287,41 +280,56 @@ bool NVidiaMonitorDataEngine::updateFreqs()
  */
 bool NVidiaMonitorDataEngine::updateMem()
 {
-	std::string strOutput;
-
-	if(m_bIsBumblebee)
+	// Open X11 Display
+	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
+	if(!m_pXDisplay)
 	{
-		if(isCgOn())
-			strOutput = executeCommand("optirun -b virtualgl nvidia-settings -c :8 -q [gpu:0]/UsedDedicatedGPUMemory -t");
-		else
-			return true;
-	}
-	else
-		strOutput = executeCommand("nvidia-settings -q [gpu:0]/UsedDedicatedGPUMemory -t");
-
-	if(strOutput != "")
-	{
-		istringstream	issData(strOutput.c_str());
-		eng::DataMap &	dmMem = m_smSources["memory-usage"].p_dmData;
-
-		issData >> dmMem["used"];
-
-		if(dmMem["total"] > 0)
-			initMem();
-
-		if(dmMem["percentage"] != -1 && dmMem["total"] > 0)
-			dmMem["percentage"] = dmMem["used"] * 100 / dmMem["total"];
-
-		return true;
-	}
-	else
+		qDebug("NVIDIA-MONITOR: Can't open X");
 		return false;
+	}
+
+	// Check if connected to a nvidia GPU
+	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
+	{
+		qDebug("NVIDIA-MONITOR: Can't attach gpu");
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	// Query GPU Frequencies
+	int32_t total;
+	int32_t used;
+
+	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
+	{
+		qDebug("NVIDIA-MONITOR: Can't get attribute total dedicated gpu memory");
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_USED_DEDICATED_GPU_MEMORY, &used))
+	{
+		qDebug("NVIDIA-MONITOR: Can't get attribute used dedicated gpu memory");
+		XCloseDisplay(m_pXDisplay);
+		return false;
+	}
+
+	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
+	dmMem["total"]			= total;
+	dmMem["used"]			= used;
+
+	if(dmMem["total"] != 0)
+		dmMem["percentage"] = dmMem["used"] * 100 / dmMem["total"];
+
+	XCloseDisplay(m_pXDisplay);
+
+	return true;
 }
 
 /**********************************************************************************************
  * Usefull
  **********************************************************************************************/
- 
+
 /**
  * Execute a shell command and get its standard strOutput
  * \param The command to execute
@@ -349,4 +357,3 @@ std::string NVidiaMonitorDataEngine::executeCommand(const std::string & in_strCm
 K_EXPORT_PLASMA_DATAENGINE(nvidia-monitor, eng::NVidiaMonitorDataEngine)
 
 #include "NVidiaMonitorDataEngine.moc"
-

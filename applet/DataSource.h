@@ -22,7 +22,7 @@
 		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		https://github.com/mdevlamynck/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -31,6 +31,7 @@
 #define APP__DATA_SOURCE__H
 
 #include <map>
+#include <inttypes.h>
 
 #include <QString>
 
@@ -53,7 +54,7 @@ struct Data
 
 /************************************************************************************************/
 
-	int		p_iData;
+	int32_t		p_iData;
 
 };
 

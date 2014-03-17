@@ -22,7 +22,7 @@
 		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		https://github.com/mdevlamynck/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -121,6 +121,7 @@ protected slots:
  * Tool Tip on hover Handling
  */
 protected slots:
+
 	void			toolTipAboutToShow				();
 
 /**
@@ -128,15 +129,16 @@ protected slots:
  */
 protected:
 
-	inline 
+	inline
 	Qt::CheckState	boolToCheckState				(bool in_bState);
-	inline 
+	inline
 	bool			checkStateToBool				(Qt::CheckState in_csState);
 
 /**
  * From SM::Applet
  */
 protected:
+
 	void			reloadRender					();
 	virtual void	constraintsEvent				(Plasma::Constraints in_constraints);
 
@@ -144,14 +146,14 @@ protected:
 
 private:
 
-	// Data get from the DataEngine 
+	// Data get from the DataEngine
 	typedef	std::map<QString, DataSource>	SourceMap;
 
 	SourceMap				m_smSources;
 	bool					m_bIsBumblebee;
 	bool					m_bIsCgOn;
 
-	// The plasmoid configuration 
+	// The plasmoid configuration
 	Ui::NVidiaMonitorConfig	m_configUi;
 	bool					m_bIsAnalog;
 

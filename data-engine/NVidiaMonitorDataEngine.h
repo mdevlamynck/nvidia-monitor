@@ -22,7 +22,7 @@
 		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		https://github.com/mdevlamynck/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -32,10 +32,18 @@
 
 #include <map>
 #include <string>
+#include <inttypes.h>
 
 #include <QString>
 #include <QTimer>
 #include <Plasma/DataEngine>
+
+extern "C"
+{
+#include <X11/Xlib.h>
+#include <NVCtrl/NVCtrl.h>
+#include <NVCtrl/NVCtrlLib.h>
+}
 
 #include "DataSource.h"
 
@@ -73,7 +81,6 @@ public:
 
 protected:
 
-	bool		initMem						();
 	void		initBumblebee				();
 
 /*
@@ -108,9 +115,11 @@ protected:
 	SourceMap	m_smSources;
 	bool		m_bIsBumblebee;
 
+	Display*	m_pXDisplay;
+	std::string	m_strXDisplayId;
+
 }; // class NVidiaMonitorDataEngine
 
 } // namespace eng
 
 #endif // ENG__NVIDIA_MONITOR_ENGINE__H
-
