@@ -27,30 +27,31 @@
 
 cmake_minimum_required(VERSION 2.8)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
+
 # ------------------ Applet ----------------------
 project(plasma_applet_nvidia-monitor)
  
-	find_package(KDE4 REQUIRED)
-	include(KDE4Defaults)
-	add_definitions (${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-	include_directories(${KDE4_INCLUDES})
+	find_package		( KDE4 REQUIRED							)
+	include				( KDE4Defaults							)
+	add_definitions		( ${QT_DEFINITIONS} ${KDE4_DEFINITIONS}	)
+	include_directories	( ${KDE4_INCLUDES}						)
  
-	file(GLOB_RECURSE nvidia-monitor-applet-src applet/*)
-	kde4_add_ui_files(nvidia-monitor-applet-src NVidiaMonitorConfig.ui)
+	file				( GLOB_RECURSE ${PROJECT_NAME}_src applet/*		)
+	kde4_add_ui_files	( ${PROJECT_NAME}_src NVidiaMonitorConfig.ui	)
 	 
-	kde4_add_plugin(${PROJECT_NAME} ${nvidia-monitor-applet-src})
-	target_link_libraries(${PROJECT_NAME} ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS})
+	kde4_add_plugin			( ${PROJECT_NAME} ${${PROJECT_NAME}_src}					)
+	target_link_libraries	( ${PROJECT_NAME} ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS}	)
 	 
-	install(TARGETS ${PROJECT_NAME} DESTINATION ${PLUGIN_INSTALL_DIR})
-	 
-	install(FILES ${PROJECT_NAME}.desktop DESTINATION ${SERVICES_INSTALL_DIR}) 
+	install	( TARGETS ${PROJECT_NAME} DESTINATION ${PLUGIN_INSTALL_DIR}			)
+	install	( FILES ${PROJECT_NAME}.desktop DESTINATION ${SERVICES_INSTALL_DIR}	) 
 
 	# Localization 
 	find_program(GETTEXT_MSGFMT_EXECUTABLE msgfmt)
 
-	if(NOT GETTEXT_MSGFMT_EXECUTABLE)
-		message( "------ NOTE: msgfmt not found. Translations will *not* be installed ------")
-	else(NOT GETTEXT_MSGFMT_EXECUTABLE)
+	if		( NOT GETTEXT_MSGFMT_EXECUTABLE	)
+		message("------ NOTE: msgfmt not found. Translations will *not* be installed ------")
+	else	( NOT GETTEXT_MSGFMT_EXECUTABLE	)
 
 		set(catalogname ${PROJECT_NAME})
 
@@ -80,17 +81,21 @@ project(plasma_applet_nvidia-monitor)
 # ------------------ Engine ----------------------
 project(plasma_engine_nvidia-monitor)
  
-	find_package(KDE4 REQUIRED)
-	include(KDE4Defaults)
-	add_definitions (${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-	include_directories(${KDE4_INCLUDES})
+	find_package		( KDE4 REQUIRED							)
+	find_package		( X11 REQUIRED							)
+	find_package		( Xext REQUIRED							)
+	find_package		( XNVCtrl REQUIRED						)
+	include				( KDE4Defaults							)
+	add_definitions 	( ${QT_DEFINITIONS} ${KDE4_DEFINITIONS}	)
+	include_directories	( ${KDE4_INCLUDES} ${X11_INCLUDE_DIR} ${Xext_INCLUDE_DIR} ${XNVCtrl_INCLUDE_DIR}	)
 	 
-	file(GLOB_RECURSE nvidia-monitor-engine-src data-engine/*)
+	file	( GLOB_RECURSE ${PROJECT_NAME}_src data-engine/*	)
 	 
-	kde4_add_plugin(${PROJECT_NAME} ${nvidia-monitor-engine-src})
-	target_link_libraries(${PROJECT_NAME} ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS})
+	kde4_add_plugin			( ${PROJECT_NAME} ${${PROJECT_NAME}_src}					)
+	target_link_libraries	( ${PROJECT_NAME} ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS} ${X11_LIBRARIES} ${Xext_LIBRARY} ${XNVCtrl_LIBRARY}	)
 	 
-	install(TARGETS ${PROJECT_NAME} DESTINATION ${PLUGIN_INSTALL_DIR})
-	 
-	install(FILES ${PROJECT_NAME}.desktop DESTINATION ${SERVICES_INSTALL_DIR}) 
+	install	( TARGETS ${PROJECT_NAME} DESTINATION ${PLUGIN_INSTALL_DIR}			)
+	install	( FILES ${PROJECT_NAME}.desktop DESTINATION ${SERVICES_INSTALL_DIR}	) 
+
+# ------------------------------------------------
 
