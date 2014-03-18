@@ -5,6 +5,9 @@ build/*
 !build/**/.cmake
 !build/*.in
 
+# QtCreator conf
+CMakeLists.txt.user
+
 # vim tmp files
 **/.*.swp
 **/tags
