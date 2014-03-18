@@ -151,7 +151,7 @@ bool NVidiaMonitorDataEngine::isCgOn()
     if(bbswitch.is_open())
     {
 		std::string strOutput;
-        bbswitch >> strOutput;
+        getline(bbswitch, strOutput);
         bbswitch.close();
 
 		if(strOutput.find("ON") != std::string::npos)
