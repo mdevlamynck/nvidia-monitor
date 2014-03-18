@@ -27,8 +27,11 @@
 	If you wish to make a fork or maintain this project, please contact me.
 */
 
+#include <fstream>
 #include <sstream>
 #include <stdio.h>
+#include <QString>
+#include <QRegExp>
 
 #include "NVidiaMonitorDataEngine.h"
 
@@ -78,12 +81,35 @@ void NVidiaMonitorDataEngine::init()
  */
 void NVidiaMonitorDataEngine::initBumblebee()
 {
-	std::string strOutput = executeCommand("[ -f /proc/acpi/bbswitch ] && printf yes || printf no");
-	if(strOutput == "yes")
-	{
+    std::ifstream bbswitch ("/proc/acpi/bbswitch");
+    if(bbswitch.is_open())
+    {
+        bbswitch.close();
 		setData("bumblebee", "status", "off");
-		m_bIsBumblebee = true;
-	}
+		m_bIsBumblebee	= true;
+
+        // Retreive display used by Bumblebee
+        std::ifstream bbconf("/etc/bumblebee/bumblebee.conf");
+        if(bbconf.is_open())
+        {
+			QRegExp		findLine("^VirtualDisplay=:[0-9]");
+			QRegExp		findXDisplay(":[0-9]");
+            std::string	line;
+            int			pos = 0;
+
+            while( getline(bbconf, line) && (pos = findLine.indexIn(line.c_str(), 0)) == -1	);
+            if(pos != -1)
+            {
+				QString tmp		= findLine.cap(0);
+                m_strXDisplayId	= tmp.toUtf8().constData();
+                pos = 0;
+                findXDisplay.indexIn(tmp, 0);
+				tmp				= findXDisplay.cap(0);
+                m_strXDisplayId	= tmp.toUtf8().constData();
+            }
+        }
+        bbconf.close();
+    }
 	else
 	{
 		setData("bumblebee", "status", "no_bb");
@@ -120,10 +146,14 @@ QStringList NVidiaMonitorDataEngine::sources() const
  */
 bool NVidiaMonitorDataEngine::isCgOn()
 {
-	std::string strOutput = executeCommand("cat /proc/acpi/bbswitch");
+    ifstream bbswitch("/proc/acpi/bbswitch");
 
-	if(strOutput != "")
-	{
+    if(bbswitch.is_open())
+    {
+		std::string strOutput;
+        bbswitch >> strOutput;
+        bbswitch.close();
+
 		if(strOutput.find("ON") != std::string::npos)
 		{
 			setData("bumblebee", "status", "on");
@@ -134,9 +164,10 @@ bool NVidiaMonitorDataEngine::isCgOn()
 			setData("bumblebee", "status", "off");
 			return false;
 		}
-	}
+    }
 	else
 		return false;
+
 }
 
 /**
@@ -265,7 +296,7 @@ bool NVidiaMonitorDataEngine::updateFreqs()
 
 	eng::DataMap &	dmFreqs = m_smSources["frequencies"].p_dmData;
 	dmFreqs["level"]		= level;
-	dmFreqs["memory"]		= graphicMemory[0];
+	dmFreqs["memory"]		= graphicMemory[0] * 2;
 	dmFreqs["graphic"]		= graphicMemory[1];
 	dmFreqs["processor"]	= processor;
 
@@ -284,14 +315,12 @@ bool NVidiaMonitorDataEngine::updateMem()
 	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
 	if(!m_pXDisplay)
 	{
-		qDebug("NVIDIA-MONITOR: Can't open X");
 		return false;
 	}
 
 	// Check if connected to a nvidia GPU
 	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
 	{
-		qDebug("NVIDIA-MONITOR: Can't attach gpu");
 		XCloseDisplay(m_pXDisplay);
 		return false;
 	}
@@ -302,14 +331,12 @@ bool NVidiaMonitorDataEngine::updateMem()
 
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
 	{
-		qDebug("NVIDIA-MONITOR: Can't get attribute total dedicated gpu memory");
 		XCloseDisplay(m_pXDisplay);
 		return false;
 	}
 
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_USED_DEDICATED_GPU_MEMORY, &used))
 	{
-		qDebug("NVIDIA-MONITOR: Can't get attribute used dedicated gpu memory");
 		XCloseDisplay(m_pXDisplay);
 		return false;
 	}
