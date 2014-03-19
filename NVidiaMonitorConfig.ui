@@ -537,8 +537,6 @@
     </spacer>
    </item>
   </layout>
-  <zorder>verticalSpacer</zorder>
-  <zorder>horizontalSpacer</zorder>
  </widget>
  <tabstops>
   <tabstop>generalAnalogCheckBox</tabstop>
