@@ -82,7 +82,6 @@ NVidiaMonitorApplet::~NVidiaMonitorApplet()
 	Plasma::DataEngine * pEngine = dataEngine("nvidia-monitor");
 	if(pEngine->isValid())
 	{
-
 		pEngine->disconnectSource("bumblebee", this);
 
 		SourceMap::iterator it;

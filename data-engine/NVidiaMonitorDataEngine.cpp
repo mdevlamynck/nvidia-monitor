@@ -185,7 +185,12 @@ bool NVidiaMonitorDataEngine::sourceRequestEvent(QString const & in_qstrName)
 	if(itSources == m_smSources.end())
 		return false;
 	else
-		return updateSourceEvent(in_qstrName);
+    {
+        if(!updateSourceEvent(in_qstrName))
+	        setData(in_qstrName, DataEngine::Data());
+
+		return true;
+    }
 }
 
 /**
