@@ -101,13 +101,6 @@ protected:
 	bool		updateFreqs					();
 	bool		updateMem					();
 
-/*
- * Usefull
- */
-protected:
-
-	std::string	executeCommand				(const std::string& in_strCmd) const;
-
 /**********************************************************************************************/
 
 protected:

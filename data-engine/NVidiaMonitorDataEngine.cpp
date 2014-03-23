@@ -167,7 +167,6 @@ bool NVidiaMonitorDataEngine::isCgOn()
     }
 	else
 		return false;
-
 }
 
 /**
@@ -224,6 +223,9 @@ bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
  */
 bool NVidiaMonitorDataEngine::updateTemp()
 {
+    if(m_bIsBumblebee && !isCgOn())
+        return false;
+
 	// Open X11 Display
 	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
 	if(!m_pXDisplay)
@@ -259,6 +261,9 @@ bool NVidiaMonitorDataEngine::updateTemp()
  */
 bool NVidiaMonitorDataEngine::updateFreqs()
 {
+    if(m_bIsBumblebee && !isCgOn())
+        return false;
+
 	// Open X11 Display
 	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
 	if(!m_pXDisplay)
@@ -311,6 +316,9 @@ bool NVidiaMonitorDataEngine::updateFreqs()
  */
 bool NVidiaMonitorDataEngine::updateMem()
 {
+    if(m_bIsBumblebee && !isCgOn())
+        return false;
+
 	// Open X11 Display
 	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
 	if(!m_pXDisplay)
@@ -351,32 +359,6 @@ bool NVidiaMonitorDataEngine::updateMem()
 	XCloseDisplay(m_pXDisplay);
 
 	return true;
-}
-
-/**********************************************************************************************
- * Usefull
- **********************************************************************************************/
-
-/**
- * Execute a shell command and get its standard strOutput
- * \param The command to execute
- * \return The standard strOutput of the command
- */
-std::string NVidiaMonitorDataEngine::executeCommand(const std::string & in_strCmd) const
-{
-	FILE*			fIn;
-	char			acBuff[8];
-	ostringstream	ossResult;
-
-	if(!( fIn = popen(in_strCmd.c_str(), "r") ))
-		return "";
-
-	while(fgets(acBuff, sizeof(acBuff), fIn)!=NULL)
-		ossResult << acBuff;
-
-	pclose(fIn);
-
-	return ossResult.str();
 }
 
 } // namespace eng

@@ -22,7 +22,7 @@
 		matthias.devlamynck@mailoo.org
 
 	The source code is aviable at :
-		https://github.com/mdevlamynck/nvidia-monitor/	
+		https://github.com/mdevlamynck/nvidia-monitor/
 
 	If you wish to make a fork or maintain this project, please contact me.
 */
@@ -35,7 +35,8 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include <QString>
- 	
+
+#include <Plasma/IconWidget>
 #include <Plasma/ToolTipManager>
 #include <Plasma/ToolTipContent>
 #include <QtGui/QGraphicsSceneMouseEvent>
@@ -71,7 +72,7 @@ NVidiaMonitorApplet::NVidiaMonitorApplet(QObject* in_pParent, const QVariantList
 
 	setHasConfigurationInterface(true);
 }
- 
+
 /**
  * Applet Destructor
  */
@@ -115,14 +116,14 @@ void NVidiaMonitorApplet::init()
 	DataMap & dmTemp	= m_smSources["temperature"].p_dmData;
 	DataMap & dmFreqs	= m_smSources["frequencies"].p_dmData;
 	DataMap & dmMem		= m_smSources["memory-usage"].p_dmData	;
-																
-	dmTemp["temperature"];                                    	
-	dmFreqs["level"];                                             
-	dmFreqs["graphic"];                                       	
-	dmFreqs["memory"];                                        	
-	dmFreqs["processor"];                                     	
-	dmMem["percentage"];                                          
-	dmMem["used"];                                            	
+
+	dmTemp["temperature"];
+	dmFreqs["level"];
+	dmFreqs["graphic"];
+	dmFreqs["memory"];
+	dmFreqs["processor"];
+	dmMem["percentage"];
+	dmMem["used"];
 	dmMem["total"];
 
 	// Getting previous saved config
@@ -153,7 +154,7 @@ void NVidiaMonitorApplet::init()
 
 	// Create first display
 	updateVisualizationsConfig();
-} 
+}
 
 /*************************************************************************************************
  * Visualizations
@@ -268,18 +269,19 @@ void NVidiaMonitorApplet::updateMemVisualization()
 }
 
 /**
- * 
+ *
  */
 void NVidiaMonitorApplet::displayBumblebeeOff()
 {
-	displayNoAvailableSources();
-//		KIcon appletIcon(icon());
-//		m_noSourcesIcon = new Plasma::IconWidget(appletIcon, QString(), this);
-//		mainLayout()->addItem(m_noSourcesIcon);
-//
-//		m_preferredItemHeight = MINIMUM;
-//
-//		setConfigurationRequired(true, i18n("CG Off"));
+	KIcon appletIcon(icon());
+	m_noSourcesIcon = new Plasma::IconWidget(appletIcon, QString(), this);
+	mainLayout()->addItem(m_noSourcesIcon);
+
+	m_preferredItemHeight = PREFERRED;
+
+	setConfigurationRequired(true, i18n("Off"));
+
+    toolTipAboutToShow();
 }
 
 /*************************************************************************************************
@@ -340,7 +342,7 @@ void NVidiaMonitorApplet::dataUpdated(QString const & in_strSource, Plasma::Data
 			m_bIsBumblebee = false;
 			m_bIsCgOn = true;
 		}
-		else 
+		else
 		{
 			m_bIsBumblebee = true;
 
@@ -411,7 +413,7 @@ void NVidiaMonitorApplet::createConfigurationInterface(KConfigDialog * pParent)
 	m_configUi.memInToolTipCheckBox		-> setCheckState (boolToCheckState	( m_smSources["memory-usage"].p_bIsInToolTip		));
 	m_configUi.memPollingSpinBox		-> setValue							( m_smSources["memory-usage"].p_iPollingInterval	);
 
-	// Connect save config event 
+	// Connect save config event
 	connect(pParent, SIGNAL(applyClicked())	, this, SLOT(configUpdated()));
 	connect(pParent, SIGNAL(okClicked())	, this, SLOT(configUpdated()));
 
@@ -494,16 +496,23 @@ void NVidiaMonitorApplet::toolTipAboutToShow()
 {
 	QString content;
 
-	DataMap & temp	= m_smSources["temperature"].p_dmData;
-	DataMap & freqs	= m_smSources["frequencies"].p_dmData;
-	DataMap & mem	= m_smSources["memory-usage"].p_dmData;
+    if(m_bIsBumblebee && !m_bIsCgOn)
+    {
+		content += i18n("GPU Off");
+    }
+	else
+    {
+		DataMap & temp	= m_smSources["temperature"].p_dmData;
+		DataMap & freqs	= m_smSources["frequencies"].p_dmData;
+		DataMap & mem	= m_smSources["memory-usage"].p_dmData;
 
-	if(m_smSources["temperature"].p_bIsInToolTip)
-		content += i18n("Temperature : %1 °C<br/>", temp["temperature"].p_iData);
-	if(m_smSources["frequencies"].p_bIsInToolTip)
-		content += i18n("Frequencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>", freqs["level"].p_iData, freqs["graphic"].p_iData, freqs["memory"].p_iData, freqs["processor"].p_iData);
-	if(m_smSources["memory-usage"].p_bIsInToolTip)
-		content += i18n("Memory Usage : %1% (%2 / %3 Mo)<br/>", mem["percentage"].p_iData, mem["used"].p_iData, mem["total"].p_iData);
+		if(m_smSources["temperature"].p_bIsInToolTip)
+			content += i18n("Temperature : %1 °C<br/>", temp["temperature"].p_iData);
+		if(m_smSources["frequencies"].p_bIsInToolTip)
+			content += i18n("Frequencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>", freqs["level"].p_iData, freqs["graphic"].p_iData, freqs["memory"].p_iData, freqs["processor"].p_iData);
+		if(m_smSources["memory-usage"].p_bIsInToolTip)
+			content += i18n("Memory Usage : %1% (%2 / %3 Mo)<br/>", mem["percentage"].p_iData, mem["used"].p_iData, mem["total"].p_iData);
+    }
 
 	Plasma::ToolTipManager::self()->setContent(this, Plasma::ToolTipContent(title(), content, KIcon(icon())));
 }
