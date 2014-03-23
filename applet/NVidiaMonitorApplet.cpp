@@ -505,12 +505,25 @@ void NVidiaMonitorApplet::toolTipAboutToShow()
 		DataMap & freqs	= m_smSources["frequencies"].p_dmData;
 		DataMap & mem	= m_smSources["memory-usage"].p_dmData;
 
+        content += "<dl>";
 		if(m_smSources["temperature"].p_bIsInToolTip)
-			content += i18n("Temperature : %1 °C<br/>", temp["temperature"].p_iData);
+			content += i18n("<dt>Temperature : %1 °C</dt>", temp["temperature"].p_iData);
+
 		if(m_smSources["frequencies"].p_bIsInToolTip)
-			content += i18n("Frequencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>", freqs["level"].p_iData, freqs["graphic"].p_iData, freqs["memory"].p_iData, freqs["processor"].p_iData);
+        {
+			content += i18n("<dt>Frequencies : Lvl. %1</dt>", freqs["level"].p_iData);
+            if(freqs["graphic"].p_iData != -1)
+				content += i18n("<dd>Graphic : %1 Mhz</dd>", freqs["graphic"].p_iData);
+            if(freqs["memory"].p_iData != -1)
+				content += i18n("<dd>Memory Bus : %1 Mhz</dd>", freqs["memory"].p_iData);
+            if(freqs["processor"].p_iData != -1)
+				content += i18n("<dd>Processor : %1 Mhz</dd>", freqs["processor"].p_iData);
+        }
+
 		if(m_smSources["memory-usage"].p_bIsInToolTip)
-			content += i18n("Memory Usage : %1% (%2 / %3 Mo)<br/>", mem["percentage"].p_iData, mem["used"].p_iData, mem["total"].p_iData);
+			content += i18n("<dt>Memory Usage : %1% (%2 / %3 Mo)</dt>", mem["percentage"].p_iData, mem["used"].p_iData, mem["total"].p_iData);
+
+        content += "</dl>";
     }
 
 	Plasma::ToolTipManager::self()->setContent(this, Plasma::ToolTipContent(title(), content, KIcon(icon())));

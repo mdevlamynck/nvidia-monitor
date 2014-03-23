@@ -1,35 +1,35 @@
-#	NVidia Monitor - plasmoid that displays nvidia gpu's informations
-#	Copyright (C) 2013 Matthias Devlamynck
-#	
-#	This file is part of NVidia Monitor.
-#	
-#	NVidia Monitor is free software: you can redistribute it and/or modify
-#	it under the terms of the GNU General Public License as published by
-#	the Free Software Foundation, either version 3 of the License, or
-#	(at your option) any later version.
-#	
-#	NVidia Monitor is distributed in the hope that it will be useful,
-#	but WITHOUT ANY WARRANTY; without even the implied warranty of
-#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-#	GNU General Public License for more details.
-#	
-#	You should have received a copy of the GNU General Public License
-#	along with NVidia Monitor. If not, see <http://www.gnu.org/licenses/>.
-#	
-#	To contact me, please send me an email at :
-#		matthias.devlamynck@mailoo.org
-#	
-#	The source code is aviable at :
-#		https://github.com/mdevlamynck/nvidia-monitor/	
-#	
-#	If you wish to make a fork or maintain this project, please contact me.
-
+# 	NVidia Monitor - plasmoid that displays nvidia gpu's informations
+# 	Copyright (C) 2013 Matthias Devlamynck
+#
+# 	This file is part of NVidia Monitor.
+#
+# 	NVidia Monitor is free software: you can redistribute it and/or modify
+# 	it under the terms of the GNU General Public License as published by
+# 	the Free Software Foundation, either version 3 of the License, or
+# 	(at your option) any later version.
+#
+# 	NVidia Monitor is distributed in the hope that it will be useful,
+# 	but WITHOUT ANY WARRANTY; without even the implied warranty of
+# 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# 	GNU General Public License for more details.
+#
+# 	You should have received a copy of the GNU General Public License
+# 	along with NVidia Monitor. If not, see <http://www.gnu.org/licenses/>.
+#
+# 	To contact me, please send me an email at :
+# 		matthias.devlamynck@mailoo.org
+#
+# 	The source code is aviable at :
+# 		https://github.com/mdevlamynck/nvidia-monitor/
+#
+# 	If you wish to make a fork or maintain this project, please contact me.
+# Matthias Devlamynck <matthias.devlamynck@mailoo.org>, 2014.
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: no addr for now\n"
-"POT-Creation-Date: 2013-12-01 16:11+0100\n"
-"PO-Revision-Date: 2013-12-01 16:16+0100\n"
+"POT-Creation-Date: 2014-03-23 23:24+0100\n"
+"PO-Revision-Date: 2014-03-23 23:23+0100\n"
 "Last-Translator: Matthias Devlamynck <matthias.devlamynck@mailoo.org>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
 "Language: fr\n"
@@ -43,90 +43,109 @@ msgstr ""
 msgid "No data sources being displayed"
 msgstr "Aucune source d'information affichée"
 
-#: applet/NVidiaMonitorApplet.cpp:105
+#: applet/NVidiaMonitorApplet.cpp:104
 msgid "nVidia Monitor"
 msgstr "Moniteur nVidia"
 
-#: applet/NVidiaMonitorApplet.cpp:418
+#: applet/NVidiaMonitorApplet.cpp:281
+msgid "Off"
+msgstr "Éteinte"
+
+#: applet/NVidiaMonitorApplet.cpp:420
 msgid "General"
 msgstr "Général"
 
-#: applet/NVidiaMonitorApplet.cpp:538
-msgid "Temperature : %1 °C<br/>"
-msgstr "Température : %1 °C<br/>"
+#: applet/NVidiaMonitorApplet.cpp:500
+msgid "GPU Off"
+msgstr "CG Éteinte"
 
-#: applet/NVidiaMonitorApplet.cpp:540
-#, fuzzy
-msgid "Frequencies : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>"
-msgstr "Fréquences : Lvl. %1 - %2 Mhz %3 Mhz %4 Mhz<br/>"
+#: applet/NVidiaMonitorApplet.cpp:510
+msgid "<dt>Temperature : %1 °C</dt>"
+msgstr "<dt>Température : %1 °C</dt>"
 
-#: applet/NVidiaMonitorApplet.cpp:542
-msgid "Memory Usage : %1% (%2 / %3 Mo)<br/>"
-msgstr "Utilisation Mémoire : %1% (%2 / %3 Mo)<br/>"
+#: applet/NVidiaMonitorApplet.cpp:514
+msgid "<dt>Frequencies : Lvl. %1</dt>"
+msgstr "<dt>Fréquences : Lvl. %1</dt>"
 
-#. i18n: file: NVidiaMonitorConfig.ui:29
+#: applet/NVidiaMonitorApplet.cpp:516
+msgid "<dd>Graphic : %1 Mhz</dd>"
+msgstr "<dd>Graphique : %1 Mhz</dd>"
+
+#: applet/NVidiaMonitorApplet.cpp:518
+msgid "<dd>Memory Bus : %1 Mhz</dd>"
+msgstr "<dd>Bus Mémoire : %1 Mhz</dd>"
+
+#: applet/NVidiaMonitorApplet.cpp:520
+msgid "<dd>Processor : %1 Mhz</dd>"
+msgstr "<dd>Processeur : %1 Mhz</dd>"
+
+#: applet/NVidiaMonitorApplet.cpp:524
+msgid "<dt>Memory Usage : %1% (%2 / %3 Mo)</dt>"
+msgstr "<dt>Utilisation Mémoire : %1% (%2 / %3 Mo)</dt>"
+
+#. i18n: file: NVidiaMonitorConfig.ui:56
 #. i18n: ectx: property (windowTitle), widget (QWidget, NVidiaMonitorConfig)
 #: build/ui_NVidiaMonitorConfig.h:338 rc.cpp:3
 msgid "Form"
 msgstr "Formulaire"
 
-#. i18n: file: NVidiaMonitorConfig.ui:78
+#. i18n: file: NVidiaMonitorConfig.ui:105
 #. i18n: ectx: property (text), widget (QLabel, generalAnalogLabel)
 #: build/ui_NVidiaMonitorConfig.h:339 rc.cpp:6
 msgid "Show Analog Meter"
 msgstr "Afficher le compteur analogique"
 
-#. i18n: file: NVidiaMonitorConfig.ui:115
+#. i18n: file: NVidiaMonitorConfig.ui:142
 #. i18n: ectx: property (text), widget (QLabel, temperatureLabel)
 #: build/ui_NVidiaMonitorConfig.h:340 rc.cpp:9
 msgid "Temperature"
 msgstr "Température"
 
-#. i18n: file: NVidiaMonitorConfig.ui:139
+#. i18n: file: NVidiaMonitorConfig.ui:166
 #. i18n: ectx: property (text), widget (QLabel, tempInAppletLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:311
+#. i18n: file: NVidiaMonitorConfig.ui:338
 #. i18n: ectx: property (text), widget (QLabel, freqsInAppletLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:395
+#. i18n: file: NVidiaMonitorConfig.ui:422
 #. i18n: ectx: property (text), widget (QLabel, memInAppletLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:139
+#. i18n: file: NVidiaMonitorConfig.ui:166
 #. i18n: ectx: property (text), widget (QLabel, tempInAppletLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:311
+#. i18n: file: NVidiaMonitorConfig.ui:338
 #. i18n: ectx: property (text), widget (QLabel, freqsInAppletLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:395
+#. i18n: file: NVidiaMonitorConfig.ui:422
 #. i18n: ectx: property (text), widget (QLabel, memInAppletLabel)
 #: build/ui_NVidiaMonitorConfig.h:341 build/ui_NVidiaMonitorConfig.h:350
 #: build/ui_NVidiaMonitorConfig.h:353 rc.cpp:12 rc.cpp:33 rc.cpp:42
 msgid "Show in Applet"
 msgstr "Afficher dans l'applet"
 
-#. i18n: file: NVidiaMonitorConfig.ui:162
+#. i18n: file: NVidiaMonitorConfig.ui:189
 #. i18n: ectx: property (text), widget (QLabel, tempInToolTipLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:334
+#. i18n: file: NVidiaMonitorConfig.ui:361
 #. i18n: ectx: property (text), widget (QLabel, freqsInToolTipLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:418
+#. i18n: file: NVidiaMonitorConfig.ui:445
 #. i18n: ectx: property (text), widget (QLabel, memInToolTipLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:162
+#. i18n: file: NVidiaMonitorConfig.ui:189
 #. i18n: ectx: property (text), widget (QLabel, tempInToolTipLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:334
+#. i18n: file: NVidiaMonitorConfig.ui:361
 #. i18n: ectx: property (text), widget (QLabel, freqsInToolTipLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:418
+#. i18n: file: NVidiaMonitorConfig.ui:445
 #. i18n: ectx: property (text), widget (QLabel, memInToolTipLabel)
 #: build/ui_NVidiaMonitorConfig.h:342 build/ui_NVidiaMonitorConfig.h:351
 #: build/ui_NVidiaMonitorConfig.h:354 rc.cpp:15 rc.cpp:36 rc.cpp:45
 msgid "Show in Tool Tip"
 msgstr "Afficher dans l'info-bulle"
 
-#. i18n: file: NVidiaMonitorConfig.ui:185
+#. i18n: file: NVidiaMonitorConfig.ui:212
 #. i18n: ectx: property (text), widget (QLabel, tempPollingLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:267
+#. i18n: file: NVidiaMonitorConfig.ui:294
 #. i18n: ectx: property (text), widget (QLabel, freqsPollingLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:441
+#. i18n: file: NVidiaMonitorConfig.ui:468
 #. i18n: ectx: property (text), widget (QLabel, memPollingLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:185
+#. i18n: file: NVidiaMonitorConfig.ui:212
 #. i18n: ectx: property (text), widget (QLabel, tempPollingLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:267
+#. i18n: file: NVidiaMonitorConfig.ui:294
 #. i18n: ectx: property (text), widget (QLabel, freqsPollingLabel)
-#. i18n: file: NVidiaMonitorConfig.ui:441
+#. i18n: file: NVidiaMonitorConfig.ui:468
 #. i18n: ectx: property (text), widget (QLabel, memPollingLabel)
 #: build/ui_NVidiaMonitorConfig.h:343 build/ui_NVidiaMonitorConfig.h:347
 #: build/ui_NVidiaMonitorConfig.h:355 rc.cpp:18 rc.cpp:27 rc.cpp:48
@@ -138,29 +157,29 @@ msgstr "Interval de rafraîchissement"
 msgid " ms"
 msgstr " ms"
 
-#. i18n: file: NVidiaMonitorConfig.ui:243
+#. i18n: file: NVidiaMonitorConfig.ui:270
 #. i18n: ectx: property (text), widget (QLabel, frequenciesLabel)
 #: build/ui_NVidiaMonitorConfig.h:346 rc.cpp:24
 msgid "Frequencies"
 msgstr "Fréquences"
 
-#. i18n: file: NVidiaMonitorConfig.ui:371
+#. i18n: file: NVidiaMonitorConfig.ui:398
 #. i18n: ectx: property (text), widget (QLabel, memoryLabel)
 #: build/ui_NVidiaMonitorConfig.h:352 rc.cpp:39
 msgid "Memory Usage"
 msgstr "Utilisation Mémoire"
 
-#. i18n: file: NVidiaMonitorConfig.ui:204
+#. i18n: file: NVidiaMonitorConfig.ui:231
 #. i18n: ectx: property (suffix), widget (QSpinBox, tempPollingSpinBox)
-#. i18n: file: NVidiaMonitorConfig.ui:286
+#. i18n: file: NVidiaMonitorConfig.ui:313
 #. i18n: ectx: property (suffix), widget (QSpinBox, freqsPollingSpinBox)
-#. i18n: file: NVidiaMonitorConfig.ui:460
+#. i18n: file: NVidiaMonitorConfig.ui:487
 #. i18n: ectx: property (suffix), widget (QSpinBox, memPollingSpinBox)
-#. i18n: file: NVidiaMonitorConfig.ui:204
+#. i18n: file: NVidiaMonitorConfig.ui:231
 #. i18n: ectx: property (suffix), widget (QSpinBox, tempPollingSpinBox)
-#. i18n: file: NVidiaMonitorConfig.ui:286
+#. i18n: file: NVidiaMonitorConfig.ui:313
 #. i18n: ectx: property (suffix), widget (QSpinBox, freqsPollingSpinBox)
-#. i18n: file: NVidiaMonitorConfig.ui:460
+#. i18n: file: NVidiaMonitorConfig.ui:487
 #. i18n: ectx: property (suffix), widget (QSpinBox, memPollingSpinBox)
 #: rc.cpp:21 rc.cpp:30 rc.cpp:51
 msgctxt "millisecond"
