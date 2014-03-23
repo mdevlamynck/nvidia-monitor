@@ -97,7 +97,8 @@ public:
 protected:
 
 	void		initBumblebee				();
-	void		initGPUs					();
+	void		initGPUConsts				();
+	bool		initGPUList					();
 
 /*
  * Data Handling
@@ -117,11 +118,15 @@ protected:
 	bool		updateFreqs					();
 	bool		updateMem					();
 
+    bool		beforeQuery					();
+    void		afterQuery					();
+
 /**********************************************************************************************/
 
 protected:
 
     GPUMap		m_gmGPUs;
+	bool		m_bIsInit;
 
 	SourceMap	m_smSources;
 	bool		m_bIsBumblebee;

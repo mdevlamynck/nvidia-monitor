@@ -50,6 +50,7 @@ namespace eng
  */
 NVidiaMonitorDataEngine::NVidiaMonitorDataEngine(QObject* in_pParent, const QVariantList& in_args)
 	: Plasma::DataEngine(in_pParent, in_args)
+    , m_bIsInit			(false)
 	, m_pXDisplay		(NULL)
 	, m_strXDisplayId	(":0")
 {
@@ -73,9 +74,11 @@ void NVidiaMonitorDataEngine::init()
 	m_smSources["frequencies"]	= DataSource(&NVidiaMonitorDataEngine::updateFreqs);
 	m_smSources["memory-usage"]	= DataSource(&NVidiaMonitorDataEngine::updateMem);
 
-	initBumblebee();
+    m_smSources["memory-usage"].p_dmData["total"] = -1;
 
-    initGPUs();
+	initBumblebee();
+    if(!m_bIsBumblebee)
+        initGPUConsts();
 }
 
 /**
@@ -113,29 +116,45 @@ void NVidiaMonitorDataEngine::initBumblebee()
 	}
 }
 
-void NVidiaMonitorDataEngine::initGPUs()
+/**
+ * \todo
+ */
+void NVidiaMonitorDataEngine::initGPUConsts()
 {
-	// Open X11 Display
-	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
-	if(!m_pXDisplay)
-		return;
+    if(!beforeQuery())
+        return;
 
-	// Check if connected to a nvidia GPU
-	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
+	if(!initGPUList())
 	{
-		XCloseDisplay(m_pXDisplay);
-		m_pXDisplay = NULL;
+		afterQuery();
 		return;
 	}
 
-	// Update data
+    // Total memory
+    int				total	= -1;
+	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
+
+	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
+	{
+		afterQuery();
+        return;
+	}
+
+	dmMem["total"]	= total;
+
+    afterQuery();
+
+    m_bIsInit = true;
+}
+
+/**
+ * \todo
+ */
+bool NVidiaMonitorDataEngine::initGPUList()
+{
     int32_t count;
     if(!XNVCTRLQueryTargetCount(m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, &count))
-	{
-		XCloseDisplay(m_pXDisplay);
-		m_pXDisplay = NULL;
-		return;
-	}
+		return false;
 
 	setData("gpus", "count", count);
 
@@ -151,20 +170,12 @@ void NVidiaMonitorDataEngine::initGPUs()
         m_gmGPUs[gpuKey].id = i;
 
 		if(!XNVCTRLQueryTargetStringAttribute(m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_STRING_GPU_UUID, &guid))
-		{
-			XCloseDisplay(m_pXDisplay);
-			m_pXDisplay = NULL;
-			return;
-		}
+			return false;
 
         m_gmGPUs[gpuKey].guid = QString(guid);
 
 		if(!XNVCTRLQueryTargetStringAttribute(m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_STRING_PRODUCT_NAME, &name))
-		{
-			XCloseDisplay(m_pXDisplay);
-			m_pXDisplay = NULL;
-			return;
-		}
+			return false;
 
 		m_gmGPUs[gpuKey].name = QString(name);
 
@@ -175,9 +186,7 @@ void NVidiaMonitorDataEngine::initGPUs()
         delete[] name;
     }
 
-	// Clean up
-	XCloseDisplay(m_pXDisplay);
-	m_pXDisplay = NULL;
+	return true;
 }
 
 /**********************************************************************************************
@@ -227,6 +236,9 @@ CGState NVidiaMonitorDataEngine::isCgOn()
 
 		if(strOutput.find("ON") != std::string::npos)
 		{
+            if(!m_bIsInit)
+                initGPUConsts();
+
 			setData("bumblebee", "status", "on");
 			return On;
 		}
@@ -288,28 +300,14 @@ bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
 
 	if(itSources != m_smSources.end() && itSources->second.p_pdUpdate != NULL)
 	{
-		// Don't update if cg off using bumblebee
-		if(m_bIsBumblebee && !isCgOn())
-			return false;
-
-		// Open X11 Display
-		m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
-		if(!m_pXDisplay)
-			return false;
-
-		// Check if connected to a nvidia GPU
-		if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
-		{
-			XCloseDisplay(m_pXDisplay);
-			m_pXDisplay = NULL;
-			return false;
-		}
+        if(!beforeQuery())
+            return false;
 
 		// Update data
-		bool result = (this->*(itSources->second.p_pdUpdate))();
+		bool isUpdated = (this->*(itSources->second.p_pdUpdate))();
 
 		// Write data if updated
-		if(result)
+		if(isUpdated)
 		{
 			DataMap::const_iterator itData;
 
@@ -317,11 +315,9 @@ bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
 				setData(itSources->first, itData->first, itData->second);
 		}
 
-		// Clean up
-		XCloseDisplay(m_pXDisplay);
-		m_pXDisplay = NULL;
+        afterQuery();
 
-		return result;
+		return isUpdated;
 	}
 	else
 		return false;
@@ -337,7 +333,7 @@ bool NVidiaMonitorDataEngine::updateTemp()
 	int32_t temp;
 
 	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &temp))
-		return false;
+        return false;
 
 	eng::DataMap &	dmTemp	= m_smSources["temperature"].p_dmData;
 	dmTemp["temperature"]	= temp;
@@ -352,18 +348,16 @@ bool NVidiaMonitorDataEngine::updateTemp()
 bool NVidiaMonitorDataEngine::updateFreqs()
 {
 	// Query GPU Frequencies
-	int32_t level;
-	int16_t graphicMemory[2];
-	int32_t processor;
+	int32_t level				= -1;
+    int16_t graphicMemory[2]	= {-1, -1};
+	int32_t processor			= -1;
 
-	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PERFORMANCE_LEVEL, &level))
-		return false;
+	bool levelSucceeded		= XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PERFORMANCE_LEVEL, &level);
+	bool graphMemSucceeded	= XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_CLOCK_FREQS, (int32_t*) graphicMemory);
+	bool processorSucceeded	= XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PROCESSOR_CLOCK_FREQS, &processor);
 
-	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_CLOCK_FREQS, (int32_t*) graphicMemory))
-		return false;
-
-	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PROCESSOR_CLOCK_FREQS, &processor))
-		return false;
+    if(!levelSucceeded && !graphMemSucceeded && !processorSucceeded)
+        return false;
 
 	eng::DataMap &	dmFreqs = m_smSources["frequencies"].p_dmData;
 	dmFreqs["level"]		= level;
@@ -381,23 +375,53 @@ bool NVidiaMonitorDataEngine::updateFreqs()
 bool NVidiaMonitorDataEngine::updateMem()
 {
 	// Query GPU Frequencies
-	int32_t total;
-	int32_t used;
+	int32_t used	= -1;
 
-	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
-		return false;
+	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
 
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_USED_DEDICATED_GPU_MEMORY, &used))
 		return false;
 
-	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
-	dmMem["total"]			= total;
-	dmMem["used"]			= used;
+	dmMem["used"]	= used;
 
-	if(dmMem["total"] != 0)
-		dmMem["percentage"] = dmMem["used"] * 100 / dmMem["total"];
+	if(dmMem["total"] > 0)
+        dmMem["percentage"] = dmMem["used"] * 100 / dmMem["total"];
 
 	return true;
+}
+
+/**
+ * Check that the query will be possible and perform needed setup
+ * \return true if will be able to query, false otherwise
+ */
+bool NVidiaMonitorDataEngine::beforeQuery()
+{
+	// Don't update if cg off using bumblebee
+	if(m_bIsBumblebee && !isCgOn())
+		return false;
+
+	// Open X11 Display
+	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
+	if(!m_pXDisplay)
+		return false;
+
+	// Check if connected to a nvidia GPU
+	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
+	{
+        afterQuery();
+		return false;
+	}
+
+    return true;
+}
+
+/**
+ * Clean up after a query
+ */
+void NVidiaMonitorDataEngine::afterQuery()
+{
+	XCloseDisplay(m_pXDisplay);
+	m_pXDisplay = NULL;
 }
 
 } // namespace eng
