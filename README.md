@@ -18,3 +18,5 @@ make
 
 You can now do a `make install` as root to install the project or you can change the prefix given to cmake to install in a chroot (that's how the archlinux package is built).
 
+If KDE can't see the applet try a `kbuildsycoca4` to update its cache.
+
