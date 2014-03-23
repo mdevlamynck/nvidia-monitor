@@ -60,6 +60,13 @@ enum CGState
 	On				= true
 };
 
+struct DataGPU
+{
+    int		id;
+    QString	guid;
+    QString	name;
+};
+
 /**
  * Provide Data about nvidia graphic cards using the proprietary driver (with nvidia-settings)
  * Uses Plasma::DataEngine to be able to get requests from plasmoids
@@ -74,6 +81,7 @@ Q_OBJECT
  * Typdefs
  */
 typedef std::map<QString, DataSource>	SourceMap;
+typedef std::map<QString, DataGPU>		GPUMap;
 
 
 /*
@@ -89,6 +97,7 @@ public:
 protected:
 
 	void		initBumblebee				();
+	void		initGPUs					();
 
 /*
  * Data Handling
@@ -111,6 +120,8 @@ protected:
 /**********************************************************************************************/
 
 protected:
+
+    GPUMap		m_gmGPUs;
 
 	SourceMap	m_smSources;
 	bool		m_bIsBumblebee;

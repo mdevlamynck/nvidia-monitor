@@ -74,6 +74,8 @@ void NVidiaMonitorDataEngine::init()
 	m_smSources["memory-usage"]	= DataSource(&NVidiaMonitorDataEngine::updateMem);
 
 	initBumblebee();
+
+    initGPUs();
 }
 
 /**
@@ -111,6 +113,73 @@ void NVidiaMonitorDataEngine::initBumblebee()
 	}
 }
 
+void NVidiaMonitorDataEngine::initGPUs()
+{
+	// Open X11 Display
+	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
+	if(!m_pXDisplay)
+		return;
+
+	// Check if connected to a nvidia GPU
+	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
+	{
+		XCloseDisplay(m_pXDisplay);
+		m_pXDisplay = NULL;
+		return;
+	}
+
+	// Update data
+    int32_t count;
+    if(!XNVCTRLQueryTargetCount(m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, &count))
+	{
+		XCloseDisplay(m_pXDisplay);
+		m_pXDisplay = NULL;
+		return;
+	}
+
+	setData("gpus", "count", count);
+
+    for(int32_t i = 0; i < count; i++)
+    {
+        ostringstream oss;
+        oss << "gpu-" << i;
+
+        char*	guid;
+        char*	name;
+        QString	gpuKey(oss.str().c_str());
+
+        m_gmGPUs[gpuKey].id = i;
+
+		if(!XNVCTRLQueryTargetStringAttribute(m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_STRING_GPU_UUID, &guid))
+		{
+			XCloseDisplay(m_pXDisplay);
+			m_pXDisplay = NULL;
+			return;
+		}
+
+        m_gmGPUs[gpuKey].guid = QString(guid);
+
+		if(!XNVCTRLQueryTargetStringAttribute(m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_STRING_PRODUCT_NAME, &name))
+		{
+			XCloseDisplay(m_pXDisplay);
+			m_pXDisplay = NULL;
+			return;
+		}
+
+		m_gmGPUs[gpuKey].name = QString(name);
+
+		setData(gpuKey, "guid", m_gmGPUs[gpuKey].guid);
+		setData(gpuKey, "name", m_gmGPUs[gpuKey].name);
+
+        delete[] guid;
+        delete[] name;
+    }
+
+	// Clean up
+	XCloseDisplay(m_pXDisplay);
+	m_pXDisplay = NULL;
+}
+
 /**********************************************************************************************
  * Data Handling
  **********************************************************************************************/
@@ -122,13 +191,21 @@ void NVidiaMonitorDataEngine::initBumblebee()
 QStringList NVidiaMonitorDataEngine::sources() const
 {
 	QStringList					aAvaible;
+	GPUMap::const_iterator		itGPUs;
 	SourceMap::const_iterator	itSources;
 
+	aAvaible << "gpus";
 	aAvaible << "bumblebee";
+
+	for(itGPUs = m_gmGPUs.begin(); itGPUs != m_gmGPUs.end(); itGPUs++)
+		aAvaible << itGPUs->first;
 
 	for(itSources = m_smSources.begin(); itSources != m_smSources.end(); itSources++)
 	{
 		aAvaible << itSources->first;
+
+		for(itGPUs = m_gmGPUs.begin(); itGPUs != m_gmGPUs.end(); itGPUs++)
+			aAvaible << itSources->first + "-" + itGPUs->first;
 	}
 
 	return aAvaible;
@@ -160,7 +237,10 @@ CGState NVidiaMonitorDataEngine::isCgOn()
 		}
 	}
 	else
+    {
+		setData("bumblebee", "status", "no_bb");
 		return NotBumblebee;
+    }
 }
 
 /**
