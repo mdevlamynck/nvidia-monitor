@@ -5,9 +5,9 @@ pkgname=kdeplasma-addons-applets-nvidia-monitor-git
 _gitname=nvidia-monitor
 _gitrepo=https://github.com/mdevlamynck/nvidia-monitor.git
 url=https://github.com/mdevlamynck/nvidia-monitor
-pkgver=nvctrl
-pkgrel=3
-pkgdesc="An applet that monitor nvidia GPU using nvidia-settings (using proprietary drivers). Not supporting SLI yet."
+pkgver=0.4
+pkgrel=1
+pkgdesc="An applet that monitor nvidia GPU using NVCtrl api (with proprietary drivers). Not supporting SLI yet."
 
 arch=('i686' 'x86_64')
 license=('GPL3')
@@ -18,15 +18,14 @@ source=("git+${_gitrepo}")
 install=nvidia-monitor.install
 md5sums=('SKIP')
 
-#pkgver() {
-#	cd ${srcdir}/${_gitname}
-#	git tag|sort -V|tail -1|tr "-" "."|sed "s/^v//"
-#}
+pkgver() {
+	cd ${srcdir}/${_gitname}
+	git tag|sort -V|tail -1|tr "-" "."|sed "s/^v//"
+}
 
 build () {
 	cd "${srcdir}/${_gitname}"
-	#git checkout v${pkgver}
-	git checkout nvctrl
+	git checkout v${pkgver}
 	mkdir -p build
 	cd build
 	cmake .. -DCMAKE_INSTALL_PREFIX="${pkgdir}/$(kde4-config --prefix)" -DCMAKE_BUILD_TYPE=Release
