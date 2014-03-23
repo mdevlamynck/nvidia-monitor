@@ -81,39 +81,33 @@ void NVidiaMonitorDataEngine::init()
  */
 void NVidiaMonitorDataEngine::initBumblebee()
 {
-    std::ifstream bbswitch ("/proc/acpi/bbswitch");
-    if(bbswitch.is_open())
-    {
-        bbswitch.close();
-		setData("bumblebee", "status", "off");
-		m_bIsBumblebee	= true;
-
-        // Retreive display used by Bumblebee
-        std::ifstream bbconf("/etc/bumblebee/bumblebee.conf");
-        if(bbconf.is_open())
-        {
-			QRegExp		findLine("^VirtualDisplay=:[0-9]");
-			QRegExp		findXDisplay(":[0-9]");
-            std::string	line;
-            int			pos = 0;
-
-            while( getline(bbconf, line) && (pos = findLine.indexIn(line.c_str(), 0)) == -1	);
-            if(pos != -1)
-            {
-				QString tmp		= findLine.cap(0);
-                m_strXDisplayId	= tmp.toUtf8().constData();
-                pos = 0;
-                findXDisplay.indexIn(tmp, 0);
-				tmp				= findXDisplay.cap(0);
-                m_strXDisplayId	= tmp.toUtf8().constData();
-            }
-        }
-        bbconf.close();
-    }
+	if(isCgOn() == NotBumblebee)
+		m_bIsBumblebee = false;
 	else
 	{
-		setData("bumblebee", "status", "no_bb");
-		m_bIsBumblebee = false;
+		m_bIsBumblebee	= true;
+
+		// Retreive display used by Bumblebee
+		std::ifstream bbconf("/etc/bumblebee/bumblebee.conf");
+		if(bbconf.is_open())
+		{
+			QRegExp		findLine("^VirtualDisplay=:[0-9]");
+			QRegExp		findXDisplay(":[0-9]");
+			std::string	line;
+			int			pos = 0;
+
+			while( getline(bbconf, line) && (pos = findLine.indexIn(line.c_str(), 0)) == -1	);
+			if(pos != -1)
+			{
+				QString tmp		= findLine.cap(0);
+				m_strXDisplayId	= tmp.toUtf8().constData();
+				pos = 0;
+				findXDisplay.indexIn(tmp, 0);
+				tmp				= findXDisplay.cap(0);
+				m_strXDisplayId	= tmp.toUtf8().constData();
+			}
+		}
+		bbconf.close();
 	}
 }
 
@@ -144,29 +138,29 @@ QStringList NVidiaMonitorDataEngine::sources() const
  * Detect if the cg is on when using bumblbee
  * \return Wether the cg is currently on or not
  */
-bool NVidiaMonitorDataEngine::isCgOn()
+CGState NVidiaMonitorDataEngine::isCgOn()
 {
-    ifstream bbswitch("/proc/acpi/bbswitch");
+	ifstream bbswitch("/proc/acpi/bbswitch");
 
-    if(bbswitch.is_open())
-    {
+	if(bbswitch.is_open())
+	{
 		std::string strOutput;
-        getline(bbswitch, strOutput);
-        bbswitch.close();
+		getline(bbswitch, strOutput);
+		bbswitch.close();
 
 		if(strOutput.find("ON") != std::string::npos)
 		{
 			setData("bumblebee", "status", "on");
-			return true;
+			return On;
 		}
 		else
 		{
 			setData("bumblebee", "status", "off");
-			return false;
+			return Off;
 		}
-    }
+	}
 	else
-		return false;
+		return NotBumblebee;
 }
 
 /**
@@ -178,19 +172,22 @@ bool NVidiaMonitorDataEngine::isCgOn()
 bool NVidiaMonitorDataEngine::sourceRequestEvent(QString const & in_qstrName)
 {
 	if(in_qstrName == "bumblebee")
+	{
+		isCgOn();
 		return true;
+	}
 
 	SourceMap::const_iterator itSources = m_smSources.find(in_qstrName);
 
 	if(itSources == m_smSources.end())
 		return false;
 	else
-    {
-        if(!updateSourceEvent(in_qstrName))
-	        setData(in_qstrName, DataEngine::Data());
+	{
+		if(!updateSourceEvent(in_qstrName))
+			setData(in_qstrName, DataEngine::Data());
 
 		return true;
-    }
+	}
 }
 
 /**
@@ -209,14 +206,42 @@ bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
 
 	SourceMap::const_iterator itSources = m_smSources.find(in_qstrName);
 
-	if(itSources != m_smSources.end() && itSources->second.p_pdUpdate != NULL && (this->*(itSources->second.p_pdUpdate))())
+	if(itSources != m_smSources.end() && itSources->second.p_pdUpdate != NULL)
 	{
-		DataMap::const_iterator itData;
+		// Don't update if cg off using bumblebee
+		if(m_bIsBumblebee && !isCgOn())
+			return false;
 
-		for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
-			setData(itSources->first, itData->first, itData->second);
+		// Open X11 Display
+		m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
+		if(!m_pXDisplay)
+			return false;
 
-		return true;
+		// Check if connected to a nvidia GPU
+		if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
+		{
+			XCloseDisplay(m_pXDisplay);
+			m_pXDisplay = NULL;
+			return false;
+		}
+
+		// Update data
+		bool result = (this->*(itSources->second.p_pdUpdate))();
+
+		// Write data if updated
+		if(result)
+		{
+			DataMap::const_iterator itData;
+
+			for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
+				setData(itSources->first, itData->first, itData->second);
+		}
+
+		// Clean up
+		XCloseDisplay(m_pXDisplay);
+		m_pXDisplay = NULL;
+
+		return result;
 	}
 	else
 		return false;
@@ -228,34 +253,14 @@ bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
  */
 bool NVidiaMonitorDataEngine::updateTemp()
 {
-    if(m_bIsBumblebee && !isCgOn())
-        return false;
-
-	// Open X11 Display
-	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
-	if(!m_pXDisplay)
-		return false;
-
-	// Check if connected to a nvidia GPU
-	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
-	{
-		XCloseDisplay(m_pXDisplay);
-		return false;
-	}
-
 	// Query GPU temperature
 	int32_t temp;
 
 	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &temp))
-	{
-		XCloseDisplay(m_pXDisplay);
 		return false;
-	}
 
 	eng::DataMap &	dmTemp	= m_smSources["temperature"].p_dmData;
 	dmTemp["temperature"]	= temp;
-
-	XCloseDisplay(m_pXDisplay);
 
 	return true;
 }
@@ -266,51 +271,25 @@ bool NVidiaMonitorDataEngine::updateTemp()
  */
 bool NVidiaMonitorDataEngine::updateFreqs()
 {
-    if(m_bIsBumblebee && !isCgOn())
-        return false;
-
-	// Open X11 Display
-	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
-	if(!m_pXDisplay)
-		return false;
-
-	// Check if connected to a nvidia GPU
-	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
-	{
-		XCloseDisplay(m_pXDisplay);
-		return false;
-	}
-
 	// Query GPU Frequencies
 	int32_t level;
 	int16_t graphicMemory[2];
 	int32_t processor;
 
 	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PERFORMANCE_LEVEL, &level))
-	{
-		XCloseDisplay(m_pXDisplay);
 		return false;
-	}
 
 	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_CLOCK_FREQS, (int32_t*) graphicMemory))
-	{
-		XCloseDisplay(m_pXDisplay);
 		return false;
-	}
 
 	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PROCESSOR_CLOCK_FREQS, &processor))
-	{
-		XCloseDisplay(m_pXDisplay);
 		return false;
-	}
 
 	eng::DataMap &	dmFreqs = m_smSources["frequencies"].p_dmData;
 	dmFreqs["level"]		= level;
 	dmFreqs["memory"]		= graphicMemory[0] * 2;
 	dmFreqs["graphic"]		= graphicMemory[1];
 	dmFreqs["processor"]	= processor;
-
-	XCloseDisplay(m_pXDisplay);
 
 	return true;
 }
@@ -321,38 +300,15 @@ bool NVidiaMonitorDataEngine::updateFreqs()
  */
 bool NVidiaMonitorDataEngine::updateMem()
 {
-    if(m_bIsBumblebee && !isCgOn())
-        return false;
-
-	// Open X11 Display
-	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
-	if(!m_pXDisplay)
-	{
-		return false;
-	}
-
-	// Check if connected to a nvidia GPU
-	if(!XNVCTRLQueryExtension(m_pXDisplay, NULL, NULL))
-	{
-		XCloseDisplay(m_pXDisplay);
-		return false;
-	}
-
 	// Query GPU Frequencies
 	int32_t total;
 	int32_t used;
 
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
-	{
-		XCloseDisplay(m_pXDisplay);
 		return false;
-	}
 
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_USED_DEDICATED_GPU_MEMORY, &used))
-	{
-		XCloseDisplay(m_pXDisplay);
 		return false;
-	}
 
 	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
 	dmMem["total"]			= total;
@@ -360,8 +316,6 @@ bool NVidiaMonitorDataEngine::updateMem()
 
 	if(dmMem["total"] != 0)
 		dmMem["percentage"] = dmMem["used"] * 100 / dmMem["total"];
-
-	XCloseDisplay(m_pXDisplay);
 
 	return true;
 }

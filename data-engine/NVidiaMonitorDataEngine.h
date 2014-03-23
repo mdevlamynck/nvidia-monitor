@@ -53,6 +53,13 @@ extern "C"
 namespace eng
 {
 
+enum CGState
+{
+	NotBumblebee	= -1,
+	Off				= false,
+	On				= true
+};
+
 /**
  * Provide Data about nvidia graphic cards using the proprietary driver (with nvidia-settings)
  * Uses Plasma::DataEngine to be able to get requests from plasmoids
@@ -92,7 +99,7 @@ public:
 
 protected:
 
-	bool		isCgOn						();
+	CGState		isCgOn						();
 
 	bool		sourceRequestEvent			(QString const & in_qstrName);
 	bool		updateSourceEvent			(QString const & in_qstrName);
