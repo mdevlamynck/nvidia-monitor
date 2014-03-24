@@ -52,7 +52,6 @@ NVidiaMonitorDataEngine::NVidiaMonitorDataEngine(QObject* in_pParent, const QVar
 	: Plasma::DataEngine(in_pParent, in_args)
     , m_bIsInit			(false)
 	, m_pXDisplay		(NULL)
-	, m_strXDisplayId	(":0")
 {
 	setMinimumPollingInterval(1000);
 }
@@ -77,7 +76,7 @@ void NVidiaMonitorDataEngine::init()
     m_smSources["memory-usage"].p_dmData["total"] = -1;
 
 	initBumblebee();
-    if(!m_bIsBumblebee)
+    if(!m_bIsInit)
         initGPUConsts();
 }
 
@@ -121,7 +120,7 @@ void NVidiaMonitorDataEngine::initBumblebee()
  */
 void NVidiaMonitorDataEngine::initGPUConsts()
 {
-    if(!beforeQuery())
+    if(!connect2XDisplay())
         return;
 
     // Total memory
@@ -340,15 +339,24 @@ bool NVidiaMonitorDataEngine::updateMem()
  */
 bool NVidiaMonitorDataEngine::beforeQuery()
 {
-    if(m_pXDisplay)
-        return true;
-
 	// Don't update if cg off using bumblebee
 	if(m_bIsBumblebee && !isCgOn())
 		return false;
 
+    return connect2XDisplay();
+}
+
+/**
+ * Check that the query will be possible and perform needed setup (without caring wether the cg is on or not)
+ * \return true if will be able to query, false otherwise
+ */
+bool NVidiaMonitorDataEngine::connect2XDisplay()
+{
+    if(m_pXDisplay)
+        return true;
+
 	// Open X11 Display
-	m_pXDisplay = XOpenDisplay(m_strXDisplayId.c_str());
+	m_pXDisplay = XOpenDisplay(m_bIsBumblebee ? m_strXDisplayId.c_str() : NULL);
 	if(!m_pXDisplay)
 		return false;
 
@@ -367,8 +375,11 @@ bool NVidiaMonitorDataEngine::beforeQuery()
  */
 void NVidiaMonitorDataEngine::afterQuery()
 {
-	XCloseDisplay(m_pXDisplay);
-	m_pXDisplay = NULL;
+    if(m_pXDisplay)
+    {
+		XCloseDisplay(m_pXDisplay);
+		m_pXDisplay = NULL;
+    }
 }
 
 } // namespace eng

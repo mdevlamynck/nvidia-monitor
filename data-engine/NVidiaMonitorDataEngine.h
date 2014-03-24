@@ -110,6 +110,7 @@ protected:
 	bool		updateMem					();
 
     bool		beforeQuery					();
+    bool		connect2XDisplay			();
     void		afterQuery					();
 
 /**********************************************************************************************/
