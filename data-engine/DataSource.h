@@ -43,12 +43,13 @@ namespace eng
  * Forward Declaration
  **********************************************************************************************/
 class NVidiaMonitorDataEngine;
+struct DataGPU;
 
 /**********************************************************************************************
  * Typedefs
  **********************************************************************************************/
 typedef	std::map<QString, int32_t>	DataMap;
-typedef	bool(NVidiaMonitorDataEngine::*Update)(void);
+typedef	bool(NVidiaMonitorDataEngine::*Update)(DataGPU &);
 
 /**
  * Handles Data : value and update function

@@ -62,9 +62,10 @@ enum CGState
 
 struct DataGPU
 {
-    int		id;
-    QString	guid;
-    QString	name;
+    int			id;
+    QString		guid;
+    QString		name;
+    DataMap		data;
 };
 
 /**
@@ -99,6 +100,7 @@ protected:
 	void		initBumblebee				();
 	void		initGPUConsts				();
 	bool		initGPUList					();
+	bool		initTotalMem				();
 
 /*
  * Data Handling
@@ -113,10 +115,13 @@ protected:
 
 	bool		sourceRequestEvent			(QString const & in_qstrName);
 	bool		updateSourceEvent			(QString const & in_qstrName);
+	bool		updateSource				(QString const & in_qstrName, bool in_bIsFirstTime);
+	bool		querySource					(Update in_pdUpdate, DataGPU & in_dataGPU,
+											 QString const & in_qstrName, bool in_bIsFirstTime);
 
-	bool		updateTemp					();
-	bool		updateFreqs					();
-	bool		updateMem					();
+	bool		updateTemp					(DataGPU & in_dataGPU);
+	bool		updateFreqs					(DataGPU & in_dataGPU);
+	bool		updateMem					(DataGPU & in_dataGPU);
 
     bool		beforeQuery					();
     void		afterQuery					();

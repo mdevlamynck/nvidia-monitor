@@ -117,38 +117,22 @@ void NVidiaMonitorDataEngine::initBumblebee()
 }
 
 /**
- * \todo
+ * Query every gpu data that won't change during the lifetime of the applet
  */
 void NVidiaMonitorDataEngine::initGPUConsts()
 {
     if(!beforeQuery())
         return;
 
-	if(!initGPUList())
-	{
-		afterQuery();
-		return;
-	}
+	if(initGPUList() && initTotalMem())
+		m_bIsInit = true;
 
-    // Total memory
-    int				total	= -1;
-	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
-
-	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
-	{
-		afterQuery();
-        return;
-	}
-
-	dmMem["total"]	= total;
-
-    afterQuery();
-
-    m_bIsInit = true;
+	afterQuery();
 }
 
 /**
- * \todo
+ * Query the list of gpu(s)
+ * \return Wether the query is successfull or not
  */
 bool NVidiaMonitorDataEngine::initGPUList()
 {
@@ -189,6 +173,26 @@ bool NVidiaMonitorDataEngine::initGPUList()
 	return true;
 }
 
+/**
+ * Query the total amount of memory
+ * \return Wether the query is successfull or not
+ */
+bool NVidiaMonitorDataEngine::initTotalMem()
+{
+    int				total	= -1;
+	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
+
+	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
+	{
+		afterQuery();
+        return false;
+	}
+
+	dmMem["total"]	= total;
+
+    return true;
+}
+
 /**********************************************************************************************
  * Data Handling
  **********************************************************************************************/
@@ -214,7 +218,7 @@ QStringList NVidiaMonitorDataEngine::sources() const
 		aAvaible << itSources->first;
 
 		for(itGPUs = m_gmGPUs.begin(); itGPUs != m_gmGPUs.end(); itGPUs++)
-			aAvaible << itSources->first + "-" + itGPUs->first;
+			aAvaible << itSources->first + "_" + itGPUs->first;
 	}
 
 	return aAvaible;
@@ -257,29 +261,14 @@ CGState NVidiaMonitorDataEngine::isCgOn()
 
 /**
  * Update the value(s) of a source
- * Called when an applet asks for the value of a source
+ * Called when an applet first asks for the value of a source
  * \param in_qstrName Asked source in_qstrName
  * \return Wether the value will by updated or not
+ *	(if false, updateSourceEvent won't be called)
  */
 bool NVidiaMonitorDataEngine::sourceRequestEvent(QString const & in_qstrName)
 {
-	if(in_qstrName == "bumblebee")
-	{
-		isCgOn();
-		return true;
-	}
-
-	SourceMap::const_iterator itSources = m_smSources.find(in_qstrName);
-
-	if(itSources == m_smSources.end())
-		return false;
-	else
-	{
-		if(!updateSourceEvent(in_qstrName))
-			setData(in_qstrName, DataEngine::Data());
-
-		return true;
-	}
+	return updateSource(in_qstrName, true);
 }
 
 /**
@@ -290,30 +279,62 @@ bool NVidiaMonitorDataEngine::sourceRequestEvent(QString const & in_qstrName)
  */
 bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
 {
-	if(in_qstrName == "bumblebee")
+    return updateSource(in_qstrName, false);
+}
+
+/**
+ * Actualy perform the update of a source
+ * @param in_qstrName 		Name of the source to update
+ * @param in_bIsFirstTime	Is it the first update of the asked source
+ * @return Wether the value will be updated or not
+ */
+bool NVidiaMonitorDataEngine::updateSource(QString const & in_qstrName, bool in_bIsFirstTime)
+{
+    if		(in_qstrName == "gpus")
+        return false;
+
+	else if	(in_qstrName == "bumblebee")
 	{
 		isCgOn();
 		return true;
 	}
 
-	SourceMap::const_iterator itSources = m_smSources.find(in_qstrName);
+    QString source	= in_qstrName.section('_', 0, 0);
+    QString gpu		= in_qstrName.section('_', 1, 1);
 
-	if(itSources != m_smSources.end() && itSources->second.p_pdUpdate != NULL)
+	SourceMap::const_iterator itSources = m_smSources.find(source);
+
+	if(itSources != m_smSources.end() && itSources->second.p_pdUpdate!= NULL)
 	{
         if(!beforeQuery())
             return false;
 
-		// Update data
-		bool isUpdated = (this->*(itSources->second.p_pdUpdate))();
+        // Check if single or general update
+        GPUMap::iterator itGPU;
+        bool isUpdated = false;
 
-		// Write data if updated
-		if(isUpdated)
-		{
-			DataMap::const_iterator itData;
+        if	(gpu.isEmpty() || (itGPU = m_gmGPUs.find(gpu)) == m_gmGPUs.end())
+        {
+            for(itGPU = m_gmGPUs.begin(); itGPU != m_gmGPUs.end(); itGPU++)
+            {
+                if(querySource(itSources->second.p_pdUpdate, itGPU->second, in_qstrName, in_bIsFirstTime))
+                    isUpdated = true;
+            }
 
-			for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
-				setData(itSources->first, itData->first, itData->second);
-		}
+			// Write data if updated
+			if		(isUpdated)
+			{
+				DataMap::const_iterator itData;
+
+				for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
+					setData(itSources->first, itData->first, itData->second);
+			}
+			else if (!isUpdated && in_bIsFirstTime)
+				setData(in_qstrName, DataEngine::Data());
+
+        }
+        else
+			isUpdated = querySource(itSources->second.p_pdUpdate, itGPU->second, in_qstrName, in_bIsFirstTime);
 
         afterQuery();
 
@@ -324,15 +345,49 @@ bool NVidiaMonitorDataEngine::updateSourceEvent(QString const & in_qstrName)
 }
 
 /**
+ * Common code of queries
+ * @param in_pdUpdate		Function wich will perform the query
+ * @param in_dataGPU		Data to update
+ * @param in_qstrName		Asked source in_qstrName
+ * @param in_bIsFirstTime	Is it the first update of the asked source
+ * @return Wether the value will be updated or not
+ */
+bool NVidiaMonitorDataEngine::querySource(Update in_pdUpdate, DataGPU & in_dataGPU, QString const & in_qstrName, bool in_bIsFirstTime)
+{
+    // Perform update
+	bool isUpdated = (this->*(in_pdUpdate))(in_dataGPU);
+
+	// Write data if updated
+	if		(isUpdated)
+	{
+		DataMap::const_iterator itData;
+
+		for(itData = in_dataGPU.data.begin(); itData != in_dataGPU.data.end(); itData++)
+			setData(in_qstrName, itData->first, itData->second);
+
+        return true;
+	}
+	else if (!isUpdated && in_bIsFirstTime)
+    {
+		setData(in_qstrName, DataEngine::Data());
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Update the value of the Temperature source
  * \return Wether the function succeeded or not
  */
-bool NVidiaMonitorDataEngine::updateTemp()
+bool NVidiaMonitorDataEngine::updateTemp(DataGPU & in_dataGPU)
 {
+	int i = in_dataGPU.id;
+
 	// Query GPU temperature
 	int32_t temp;
 
-	if(!XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &temp))
+	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &temp))
         return false;
 
 	eng::DataMap &	dmTemp	= m_smSources["temperature"].p_dmData;
@@ -345,16 +400,18 @@ bool NVidiaMonitorDataEngine::updateTemp()
  * Update the values of the Frequncies source
  * \return Wether the function succeeded or not
  */
-bool NVidiaMonitorDataEngine::updateFreqs()
+bool NVidiaMonitorDataEngine::updateFreqs(DataGPU & in_dataGPU)
 {
+	int i = in_dataGPU.id;
+
 	// Query GPU Frequencies
 	int32_t level				= -1;
     int16_t graphicMemory[2]	= {-1, -1};
 	int32_t processor			= -1;
 
-	bool levelSucceeded		= XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PERFORMANCE_LEVEL, &level);
-	bool graphMemSucceeded	= XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_CLOCK_FREQS, (int32_t*) graphicMemory);
-	bool processorSucceeded	= XNVCTRLQueryAttribute (m_pXDisplay, 0, 0, NV_CTRL_GPU_CURRENT_PROCESSOR_CLOCK_FREQS, &processor);
+	bool levelSucceeded		= XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_GPU_CURRENT_PERFORMANCE_LEVEL, &level);
+	bool graphMemSucceeded	= XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_GPU_CURRENT_CLOCK_FREQS, (int32_t*) graphicMemory);
+	bool processorSucceeded	= XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_GPU_CURRENT_PROCESSOR_CLOCK_FREQS, &processor);
 
     if(!levelSucceeded && !graphMemSucceeded && !processorSucceeded)
         return false;
@@ -372,14 +429,16 @@ bool NVidiaMonitorDataEngine::updateFreqs()
  * Update the values of the Memory-Usage source
  * \return Wether the function succeeded or not
  */
-bool NVidiaMonitorDataEngine::updateMem()
+bool NVidiaMonitorDataEngine::updateMem(DataGPU & in_dataGPU)
 {
+	int i = in_dataGPU.id;
+
 	// Query GPU Frequencies
 	int32_t used	= -1;
 
 	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
 
-	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_USED_DEDICATED_GPU_MEMORY, &used))
+	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_USED_DEDICATED_GPU_MEMORY, &used))
 		return false;
 
 	dmMem["used"]	= used;
