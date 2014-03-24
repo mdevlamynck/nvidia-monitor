@@ -129,7 +129,10 @@ void NVidiaMonitorDataEngine::initGPUConsts()
 	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
 
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
+    {
+		afterQuery();
         return;
+    }
 
 	dmMem["total"]	= total;
 
@@ -190,7 +193,10 @@ CGState NVidiaMonitorDataEngine::isCgOn()
 		}
 	}
 	else
+	{
+		setData("bumblebee", "status", "no_bb");
 		return NotBumblebee;
+    }
 }
 
 /**
@@ -334,6 +340,9 @@ bool NVidiaMonitorDataEngine::updateMem()
  */
 bool NVidiaMonitorDataEngine::beforeQuery()
 {
+    if(m_pXDisplay)
+        return true;
+
 	// Don't update if cg off using bumblebee
 	if(m_bIsBumblebee && !isCgOn())
 		return false;
