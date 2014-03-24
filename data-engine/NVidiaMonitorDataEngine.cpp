@@ -317,21 +317,27 @@ bool NVidiaMonitorDataEngine::updateSource(QString const & in_qstrName, bool in_
                 if(querySource(itSources->second.p_pdUpdate, itGPU->second, in_qstrName, in_bIsFirstTime))
                     isUpdated = true;
             }
-
-			// Write data if updated
-			if		(isUpdated)
-			{
-				DataMap::const_iterator itData;
-
-				for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
-					setData(itSources->first, itData->first, itData->second);
-			}
-			else if (!isUpdated && in_bIsFirstTime)
-				setData(in_qstrName, DataEngine::Data());
-
         }
         else
 			isUpdated = querySource(itSources->second.p_pdUpdate, itGPU->second, in_qstrName, in_bIsFirstTime);
+
+
+		// Write data if updated
+		if		(isUpdated)
+		{
+			DataMap::const_iterator itData;
+
+			for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
+			{
+				setData(source, itData->first, itData->second);
+				setData(in_qstrName, itData->first, itData->second);
+			}
+		}
+		else if (!isUpdated && in_bIsFirstTime)
+		{
+			setData(source, DataEngine::Data());
+			setData(in_qstrName, DataEngine::Data());
+		}
 
         afterQuery();
 
@@ -362,15 +368,15 @@ bool NVidiaMonitorDataEngine::querySource(Update in_pdUpdate, DataGPU & in_dataG
 		for(itData = in_dataGPU.data.begin(); itData != in_dataGPU.data.end(); itData++)
 			setData(in_qstrName, itData->first, itData->second);
 
-        return true;
+		return true;
 	}
 	else if (!isUpdated && in_bIsFirstTime)
-    {
+	{
 		setData(in_qstrName, DataEngine::Data());
-        return true;
-    }
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 /**
@@ -379,9 +385,8 @@ bool NVidiaMonitorDataEngine::querySource(Update in_pdUpdate, DataGPU & in_dataG
  */
 bool NVidiaMonitorDataEngine::updateTemp(DataGPU & in_dataGPU)
 {
-	int i = in_dataGPU.id;
-
 	// Query GPU temperature
+	int		i		= in_dataGPU.id;
 	int32_t temp;
 
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &temp))
@@ -399,9 +404,8 @@ bool NVidiaMonitorDataEngine::updateTemp(DataGPU & in_dataGPU)
  */
 bool NVidiaMonitorDataEngine::updateFreqs(DataGPU & in_dataGPU)
 {
-	int i = in_dataGPU.id;
-
 	// Query GPU Frequencies
+	int		i					= in_dataGPU.id;
 	int32_t level				= -1;
     int16_t graphicMemory[2]	= {-1, -1};
 	int32_t processor			= -1;
@@ -428,9 +432,8 @@ bool NVidiaMonitorDataEngine::updateFreqs(DataGPU & in_dataGPU)
  */
 bool NVidiaMonitorDataEngine::updateMem(DataGPU & in_dataGPU)
 {
-	int i = in_dataGPU.id;
-
 	// Query GPU Frequencies
+	int		i		= in_dataGPU.id;
 	int32_t used	= -1;
 
 	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
