@@ -178,13 +178,31 @@ bool NVidiaMonitorDataEngine::initGPUList()
  */
 bool NVidiaMonitorDataEngine::initTotalMem()
 {
-    int				total	= -1;
-	eng::DataMap &	dmMem	= m_smSources["memory-usage"].p_dmData;
+    int					total	= -1;
+	eng::DataMap &		dmMem	= m_smSources["memory-usage"].p_dmData;
 
-	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, 0, 0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total))
+    GPUMap::iterator	itGpu;
+    for(itGpu = m_gmGPUs.begin();
+		itGpu != m_gmGPUs.end() && XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, itGpu->second.id,
+																0, NV_CTRL_TOTAL_DEDICATED_GPU_MEMORY, &total);
+		itGpu++)
+    {
+        itGpu->second.data["memory-usage"].p_dmData["total"] = total;
+		setData("memory-usage_" + itGpu->first, "total", total);
+
+		if(dmMem["total"] == -1)
+			dmMem["total"] = 0;
+
+        dmMem["total"] += total;
+    }
+
+    if(itGpu != m_gmGPUs.end())
+    {
+		dmMem["total"] = -1;
         return false;
+    }
 
-	dmMem["total"]	= total;
+	setData("memory-usage", "total", dmMem["total"]);
 
     return true;
 }
@@ -298,7 +316,7 @@ bool NVidiaMonitorDataEngine::updateSource(QString const & in_qstrName, bool in_
     QString source	= in_qstrName.section('_', 0, 0);
     QString gpu		= in_qstrName.section('_', 1, 1);
 
-	SourceMap::const_iterator itSources = m_smSources.find(source);
+	SourceMap::iterator itSources = m_smSources.find(source);
 
 	if(itSources != m_smSources.end() && itSources->second.p_pdUpdate!= NULL)
 	{
@@ -313,30 +331,37 @@ bool NVidiaMonitorDataEngine::updateSource(QString const & in_qstrName, bool in_
         {
             for(itGPU = m_gmGPUs.begin(); itGPU != m_gmGPUs.end(); itGPU++)
             {
-                if(querySource(itSources->second.p_pdUpdate, itGPU->second, in_qstrName, in_bIsFirstTime))
+                if(querySource(itSources->second.p_pdUpdate, itGPU->second, source, itGPU->first, in_bIsFirstTime))
                     isUpdated = true;
             }
+
+			// Write data if updated
+			if		(isUpdated)
+			{
+				DataMap::iterator itData;
+
+				for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
+                {
+                    itData->second = 0;
+
+					for(itGPU = m_gmGPUs.begin(); itGPU != m_gmGPUs.end(); itGPU++)
+					{
+                        itData->second += itGPU->second.data[source].p_dmData[itData->first];
+                    }
+
+					setData(in_qstrName, itData->first, itData->second);
+				}
+
+				return true;
+			}
+			else if (!isUpdated && in_bIsFirstTime)
+			{
+				setData(in_qstrName, DataEngine::Data());
+				return true;
+			}
         }
         else
-			isUpdated = querySource(itSources->second.p_pdUpdate, itGPU->second, in_qstrName, in_bIsFirstTime);
-
-
-		// Write data if updated
-		if		(isUpdated)
-		{
-			DataMap::const_iterator itData;
-
-			for(itData = itSources->second.p_dmData.begin(); itData != itSources->second.p_dmData.end(); itData++)
-			{
-				setData(source, itData->first, itData->second);
-				setData(in_qstrName, itData->first, itData->second);
-			}
-		}
-		else if (!isUpdated && in_bIsFirstTime)
-		{
-			setData(source, DataEngine::Data());
-			setData(in_qstrName, DataEngine::Data());
-		}
+			isUpdated = querySource(itSources->second.p_pdUpdate, itGPU->second, source, gpu, in_bIsFirstTime);
 
         afterQuery();
 
@@ -350,28 +375,32 @@ bool NVidiaMonitorDataEngine::updateSource(QString const & in_qstrName, bool in_
  * Common code of queries
  * @param in_pdUpdate		Function wich will perform the query
  * @param in_dataGPU		Data to update
- * @param in_qstrName		Asked source in_qstrName
+ * @param in_qstrSource		Asked source in sourceRequestEvent or updateSourceEvent
+ * @param in_qstrGpu		Asked gpu in sourceRequestEvent or updateSourceEvent
  * @param in_bIsFirstTime	Is it the first update of the asked source
  * @return Wether the value will be updated or not
  */
-bool NVidiaMonitorDataEngine::querySource(Update in_pdUpdate, DataGPU & in_dataGPU, QString const & in_qstrName, bool in_bIsFirstTime)
+bool NVidiaMonitorDataEngine::querySource(Update in_pdUpdate, DataGPU & in_dataGPU,
+											QString const & in_qstrSource, QString const & in_qstrGpu, bool in_bIsFirstTime)
 {
     // Perform update
-	bool isUpdated = (this->*(in_pdUpdate))(in_dataGPU);
+	DataMap &	dmGpu		= in_dataGPU.data[in_qstrSource.toUtf8().constData()].p_dmData;
+    QString		sourceName	= in_qstrGpu.isEmpty() ? in_qstrSource : in_qstrSource + "_" + in_qstrGpu;
+	bool		isUpdated	= (this->*(in_pdUpdate))(in_dataGPU, dmGpu);
 
 	// Write data if updated
 	if		(isUpdated)
 	{
 		DataMap::const_iterator itData;
 
-		for(itData = in_dataGPU.data.begin(); itData != in_dataGPU.data.end(); itData++)
-			setData(in_qstrName, itData->first, itData->second);
+		for(itData = dmGpu.begin(); itData != dmGpu.end(); itData++)
+			setData(sourceName, itData->first, itData->second);
 
 		return true;
 	}
 	else if (!isUpdated && in_bIsFirstTime)
 	{
-		setData(in_qstrName, DataEngine::Data());
+		setData(sourceName, DataEngine::Data());
 		return true;
 	}
 
@@ -380,9 +409,11 @@ bool NVidiaMonitorDataEngine::querySource(Update in_pdUpdate, DataGPU & in_dataG
 
 /**
  * Update the value of the Temperature source
+ * \param in_dataGPU	GPU to update
+ * \param in_dataSource	Data in the GPU to update
  * \return Wether the function succeeded or not
  */
-bool NVidiaMonitorDataEngine::updateTemp(DataGPU & in_dataGPU)
+bool NVidiaMonitorDataEngine::updateTemp(DataGPU & in_dataGPU, DataMap & in_dataSource)
 {
 	// Query GPU temperature
 	int		i		= in_dataGPU.id;
@@ -391,17 +422,19 @@ bool NVidiaMonitorDataEngine::updateTemp(DataGPU & in_dataGPU)
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &temp))
         return false;
 
-	eng::DataMap &	dmTemp	= m_smSources["temperature"].p_dmData;
-	dmTemp["temperature"]	= temp;
+
+    m_smSources["temperature"].p_dmData["temperature"] = in_dataSource["temperature"] = temp;
 
 	return true;
 }
 
 /**
  * Update the values of the Frequncies source
+ * \param in_dataGPU	GPU to update
+ * \param in_dataSource	Data in the GPU to update
  * \return Wether the function succeeded or not
  */
-bool NVidiaMonitorDataEngine::updateFreqs(DataGPU & in_dataGPU)
+bool NVidiaMonitorDataEngine::updateFreqs(DataGPU & in_dataGPU, DataMap & in_dataSource)
 {
 	// Query GPU Frequencies
 	int		i					= in_dataGPU.id;
@@ -416,20 +449,21 @@ bool NVidiaMonitorDataEngine::updateFreqs(DataGPU & in_dataGPU)
     if(!levelSucceeded && !graphMemSucceeded && !processorSucceeded)
         return false;
 
-	eng::DataMap &	dmFreqs = m_smSources["frequencies"].p_dmData;
-	dmFreqs["level"]		= level;
-	dmFreqs["memory"]		= graphicMemory[0] * 2;
-	dmFreqs["graphic"]		= graphicMemory[1];
-	dmFreqs["processor"]	= processor;
+	m_smSources["frequencies"].p_dmData["level"]		= in_dataSource["level"]		= level;
+	m_smSources["frequencies"].p_dmData["memory"]		= in_dataSource["memory"]		= graphicMemory[0] * 2;
+	m_smSources["frequencies"].p_dmData["graphic"]		= in_dataSource["graphic"]		= graphicMemory[1];
+	m_smSources["frequencies"].p_dmData["processor"]	= in_dataSource["processor"]	= processor;
 
 	return true;
 }
 
 /**
  * Update the values of the Memory-Usage source
+ * \param in_dataGPU	GPU to update
+ * \param in_dataSource	Data in the GPU to update
  * \return Wether the function succeeded or not
  */
-bool NVidiaMonitorDataEngine::updateMem(DataGPU & in_dataGPU)
+bool NVidiaMonitorDataEngine::updateMem(DataGPU & in_dataGPU, DataMap & in_dataSource)
 {
 	// Query GPU Frequencies
 	int		i		= in_dataGPU.id;
@@ -440,10 +474,10 @@ bool NVidiaMonitorDataEngine::updateMem(DataGPU & in_dataGPU)
 	if(!XNVCTRLQueryTargetAttribute (m_pXDisplay, NV_CTRL_TARGET_TYPE_GPU, i, 0, NV_CTRL_USED_DEDICATED_GPU_MEMORY, &used))
 		return false;
 
-	dmMem["used"]	= used;
+    m_smSources["memory-usage"].p_dmData["used"] = in_dataSource["used"]	= used;
 
-	if(dmMem["total"] > 0)
-        dmMem["percentage"] = dmMem["used"] * 100 / dmMem["total"];
+	if(in_dataSource["total"] > 0)
+        m_smSources["memory-usage"].p_dmData["percentage"] = in_dataSource["percentage"] = in_dataSource["used"] * 100 / in_dataSource["total"];
 
 	return true;
 }

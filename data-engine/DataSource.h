@@ -49,7 +49,7 @@ struct DataGPU;
  * Typedefs
  **********************************************************************************************/
 typedef	std::map<QString, int32_t>	DataMap;
-typedef	bool(NVidiaMonitorDataEngine::*Update)(DataGPU &);
+typedef	bool(NVidiaMonitorDataEngine::*Update)(DataGPU &, DataMap &);
 
 /**
  * Handles Data : value and update function

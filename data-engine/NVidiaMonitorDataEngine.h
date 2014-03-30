@@ -53,6 +53,17 @@ extern "C"
 namespace eng
 {
 
+/*
+ * Typdefs
+ */
+typedef std::map<QString, DataSource>	SourceMap;
+typedef std::map<QString, DataGPU>		GPUMap;
+
+/**
+ * Represent the diffrent possible states of a GPU
+ *
+ * Uses boolean values for convenience.
+ */
 enum CGState
 {
 	NotBumblebee	= -1,
@@ -60,12 +71,15 @@ enum CGState
 	On				= true
 };
 
+/**
+ * Represent a GPU
+ */
 struct DataGPU
 {
     int			id;
     QString		guid;
     QString		name;
-    DataMap		data;
+    SourceMap	data;
 };
 
 /**
@@ -77,13 +91,6 @@ class NVidiaMonitorDataEngine : public Plasma::DataEngine
 
 // Needed to use signals/slots provided by Qt
 Q_OBJECT
-
-/*
- * Typdefs
- */
-typedef std::map<QString, DataSource>	SourceMap;
-typedef std::map<QString, DataGPU>		GPUMap;
-
 
 /*
  * Inits & Releases
@@ -117,11 +124,11 @@ protected:
 	bool		updateSourceEvent			(QString const & in_qstrName);
 	bool		updateSource				(QString const & in_qstrName, bool in_bIsFirstTime);
 	bool		querySource					(Update in_pdUpdate, DataGPU & in_dataGPU,
-											 QString const & in_qstrName, bool in_bIsFirstTime);
+											 QString const & in_qstrSource, QString const & in_qstrGpu, bool in_bIsFirstTime);
 
-	bool		updateTemp					(DataGPU & in_dataGPU);
-	bool		updateFreqs					(DataGPU & in_dataGPU);
-	bool		updateMem					(DataGPU & in_dataGPU);
+	bool		updateTemp					(DataGPU & in_dataGPU, DataMap & in_dataSource);
+	bool		updateFreqs					(DataGPU & in_dataGPU, DataMap & in_dataSource);
+	bool		updateMem					(DataGPU & in_dataGPU, DataMap & in_dataSource);
 
     bool		beforeQuery					();
     bool		connect2XDisplay			();
