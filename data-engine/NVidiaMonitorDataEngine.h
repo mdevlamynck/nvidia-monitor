@@ -124,6 +124,7 @@ protected:
 	bool		updateMem					(DataGPU & in_dataGPU);
 
     bool		beforeQuery					();
+    bool		connect2XDisplay			();
     void		afterQuery					();
 
 /**********************************************************************************************/
