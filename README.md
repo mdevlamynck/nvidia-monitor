@@ -20,3 +20,6 @@ You can now do a `make install` as root to install the project or you can change
 
 If KDE can't see the applet try a `kbuildsycoca4` to update its cache.
 
+### Known Issues
+
+The linking process might fail if the option `--as-needed` is enabled.
