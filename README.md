@@ -5,7 +5,11 @@ An applet that monitor nvidia GPU using nvidia-settings (using proprietary drive
 
 ## Installation
 
+### ArchLinux
+
 ArchLinux users, just use the aur pkg : [kdeplasma-addons-applets-nvidia-monitor-git](https://aur.archlinux.org/packages/kdeplasma-addons-applets-nvidia-monitor-git/)
+
+### Other Distributions
 
 Go in the cloned repo and compile the project :
 
